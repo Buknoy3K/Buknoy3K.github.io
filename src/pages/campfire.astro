@@ -13,8 +13,11 @@
   </head>
   <body>
     <canvas id="campfire" aria-label="3D scene: a desk of devices, a fire garden with a mountain pine, and a kiosk. The laptop shows the Saleng Labs website."></canvas>
-    <p class="hint">Drag to look around. Scroll or pinch to zoom. Click the laptop to open the site.</p>
-    <div class="zoom" role="group" aria-label="Zoom">
+    <p class="hint">Drag to look around. Scroll or pinch to zoom. Click the laptop to open the site, or the lamp to switch it on.</p>
+    <div class="zoom" role="group" aria-label="Zoom and lamp">
+      <button type="button" class="lamp" aria-pressed="false" aria-label="Desk lamp" title="Desk lamp">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" /></svg>
+      </button>
       <button type="button" data-zoom="0.25" aria-label="Zoom in">+</button>
       <button type="button" data-zoom="-0.25" aria-label="Zoom out">&minus;</button>
     </div>
@@ -23,10 +26,18 @@
     <script>
       import { mountCampfire } from '../scripts/campfire/scene';
       const back = document.querySelector<HTMLButtonElement>('.back')!;
-      const { zoomBy, exitFocus } = mountCampfire(document.getElementById('campfire') as HTMLCanvasElement, '/', (focused) => {
-        document.body.classList.toggle('focused', focused);
-        back.hidden = !focused;
-      });
+      const lampButton = document.querySelector<HTMLButtonElement>('.lamp')!;
+      const showLamp = (on: boolean) => lampButton.setAttribute('aria-pressed', String(on));
+      const { zoomBy, exitFocus, toggleLamp } = mountCampfire(
+        document.getElementById('campfire') as HTMLCanvasElement,
+        '/',
+        (focused) => {
+          document.body.classList.toggle('focused', focused);
+          back.hidden = !focused;
+        },
+        showLamp,
+      );
+      lampButton.addEventListener('click', () => showLamp(toggleLamp()));
       document.querySelectorAll<HTMLButtonElement>('[data-zoom]').forEach((b) => b.addEventListener('click', () => zoomBy(Number(b.dataset.zoom))));
       back.addEventListener('click', exitFocus);
     </script>
@@ -43,7 +54,9 @@
         border: 1px solid #2a2d31; background: #121417cc; color: #d6d8db; cursor: pointer;
       }
       .zoom button { width: 40px; height: 40px; border-radius: 50%; font: 20px/1 system-ui, sans-serif; }
+      .zoom button { display: grid; place-items: center; }
       .zoom button:hover, .back:hover { border-color: #3ecf8e; color: #3ecf8e; }
+      .zoom .lamp[aria-pressed='true'] { color: #ffcf8f; border-color: #ffcf8f; }
       .zoom button:focus-visible, .back:focus-visible { outline: 2px solid #3ecf8e; outline-offset: 2px; }
       .hint, .zoom { transition: opacity 0.3s; }
       .focused .hint, .focused .zoom { opacity: 0; pointer-events: none; }

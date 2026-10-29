@@ -36,7 +36,7 @@ const M = {
   printer: std('#121315', { roughness: 0.68 }),
   printerLid: std('#1b1c1f', { roughness: 0.35 }),
   paper: std('#ffffff', { map: T.receipt(), side: THREE.DoubleSide, roughness: 0.85 }),
-  pages: std('#eee7d8', { roughness: 0.95 }),
+  pages: std('#bfb49f', { roughness: 1 }),
   diary: std('#262321', { roughness: 0.75 }),
   band: std('#0c0d0e', { roughness: 0.5 }),
   pen: std('#cfd2d6', { roughness: 0.22, metalness: 0.9 }),
@@ -45,12 +45,19 @@ const M = {
   whitePot: phys('#ecebe6', { roughness: 0.28, clearcoat: 0.4, side: THREE.DoubleSide }),
   soil: std('#2b1f17', { roughness: 1 }),
   pebble: std('#a39c90', { roughness: 0.8 }),
-  jade: phys('#46783a', { roughness: 0.35, clearcoat: 0.45, clearcoatRoughness: 0.3 }),
-  jadeYoung: phys('#7aa653', { roughness: 0.4, clearcoat: 0.3 }),
+  succ: phys('#7fae86', { roughness: 0.45, clearcoat: 0.3, clearcoatRoughness: 0.5 }),
+  succYoung: phys('#a9c9a0', { roughness: 0.45, clearcoat: 0.3 }),
+  succTip: std('#a88a7a', { roughness: 0.6 }),
+  figWhite: std('#f4f2ee', { roughness: 0.4 }),
   can: std('#7b9dc4', { roughness: 0.38, metalness: 0.35, side: THREE.DoubleSide }),
-  lampShade: std('#e8662c', { roughness: 0.45, side: THREE.DoubleSide }),
+  brass: std('#b08d4f', { roughness: 0.3, metalness: 0.9 }),
+  greenGlass: phys('#1d6b2c', { roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.1, emissive: '#0d3a16', emissiveIntensity: 0.6, side: THREE.FrontSide }),
+  shadeInside: std('#ffe7b8', { emissive: '#ffcf87', emissiveIntensity: 0.9, side: THREE.BackSide }),
+  figSkin: std('#f1c8a0', { roughness: 0.55 }),
+  figGi: std('#f07a1c', { roughness: 0.5 }),
+  figBlue: std('#1f4fa8', { roughness: 0.5 }),
+  figHair: std('#121214', { roughness: 0.45 }),
   lampGlow: new THREE.MeshBasicMaterial({ color: '#ffd9a8' }),
-  notes: ['#f3e27c', '#f4b0c8', '#a5cdf2', '#b3e3a6'].map((c) => std(c, { roughness: 0.9, side: THREE.DoubleSide })),
   walnut: std('#ffffff', { map: T.wood('#6b4630', '#3d2617'), roughness: 0.45 }),
   pineBark: std('#a39486', { map: T.bark(), roughness: 0.95 }),
   needle: std('#ffffff', { roughness: 0.7 }),
@@ -297,13 +304,6 @@ function laptop() {
   const screen = at(rboxC(W - 0.01, 0.002, D - 0.016, 0.003, M.glass), 0, -0.0022, D / 2 + 0.002);
   screen.name = 'laptopScreen'; // the scene pins the live website onto this (it faces the lid's -y)
   lid.add(screen);
-  // Sticky notes stuck to the lid's edges, half hanging off
-  for (const [x, z, rot, m] of [[-1, 0.78, 0.12, M.notes[0]], [-1, 0.5, -0.1, M.notes[1]], [1, 0.84, -0.08, M.notes[2]], [1, 0.58, 0.14, M.notes[3]]] as const) {
-    const note = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.05).rotateX(Math.PI / 2), m);
-    note.position.set(x * (W / 2 + 0.014), -0.0034, D * z);
-    note.rotation.y = rot;
-    lid.add(note);
-  }
   lid.position.set(0, 0.013, -D / 2);
   lid.rotation.x = -1.85;
   g.add(lid);
@@ -314,27 +314,29 @@ function laptop() {
   return g;
 }
 
-/** Tablet on a round-based swivel stand. */
+/** Tablet leaning back on a slim folding aluminium stand: a thin base plate with a lip at the front that holds the
+ *  tablet's bottom edge, and a flat strut behind propping it up. */
 function tablet() {
   const g = group('tablet');
-  g.add(cyl(0.06, 0.062, 0.008, M.alu, 40));
-  // Neck: from the base up to the back of the puck, so it stops behind the tablet instead of poking through it
-  const top = new THREE.Vector3(0, 0.13, -0.03).addScaledVector(new THREE.Vector3(0, Math.sin(0.38), Math.cos(0.38)), -0.011);
-  const bottom = new THREE.Vector3(0, 0.008, 0), dir = top.clone().sub(bottom);
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.011, dir.length(), 16), M.alu);
-  neck.position.copy(bottom).addScaledVector(dir, 0.5);
-  neck.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
-  g.add(neck);
-  const slab = group('slab', rboxC(0.25, 0.175, 0.008, 0.012, M.plastic));
-  slab.add(at(rboxC(0.244, 0.169, 0.002, 0.01, M.bezel), 0, 0, 0.0035));
-  slab.add(at(rboxC(0.24, 0.165, 0.002, 0.008, M.glass), 0, 0, 0.005));
-  const puck = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.008, 24), M.aluDark);
-  puck.rotation.x = Math.PI / 2;
-  puck.position.z = -0.007;
-  slab.add(puck);
-  slab.position.set(0, 0.13, -0.03);
-  slab.rotation.x = -0.38;
+  const W = 0.2, H = 0.142, lean = 0.32; // landscape, tipped back from upright
+  g.add(rbox(0.11, 0.005, 0.1, 0.002, M.alu)); // base plate
+  g.add(at(rbox(0.11, 0.013, 0.006, 0.002, M.alu), 0, 0, 0.047)); // front lip
+  const up = new THREE.Vector3(0, Math.cos(lean), -Math.sin(lean)), back = new THREE.Vector3(0, -Math.sin(lean), -Math.cos(lean));
+  const foot = new THREE.Vector3(0, 0.005, 0.04); // where the tablet's bottom edge rests, against the lip
+  const slab = group('slab', rboxC(W, H, 0.007, 0.01, M.plastic));
+  slab.add(at(rboxC(W - 0.006, H - 0.006, 0.002, 0.008, M.bezel), 0, 0, 0.0032));
+  slab.add(at(rboxC(W - 0.012, H - 0.012, 0.002, 0.006, M.glass), 0, 0, 0.0045));
+  slab.position.copy(foot).addScaledVector(up, H / 2).addScaledVector(back, 0.0035);
+  slab.rotation.x = -lean;
   g.add(slab);
+  // Strut: a flat aluminium plate from the back of the base up to the middle of the tablet's back
+  const top = foot.clone().addScaledVector(up, H * 0.5).addScaledVector(back, 0.009);
+  const bottom = new THREE.Vector3(0, 0.005, -0.045), dir = top.clone().sub(bottom);
+  const strut = rboxC(0.07, dir.length(), 0.005, 0.002, M.alu);
+  strut.position.copy(bottom).addScaledVector(dir, 0.5);
+  strut.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+  g.add(strut);
+  g.add(at(new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.072, 12).rotateZ(Math.PI / 2), M.aluDark), 0, 0.007, -0.045)); // hinge
   return g;
 }
 
@@ -356,11 +358,11 @@ function phone() {
 /** Business card standing in a walnut block. */
 function cardStand() {
   const g = group('card');
-  g.add(rbox(0.1, 0.024, 0.034, 0.006, M.walnut));
-  g.add(at(rboxC(0.09, 0.002, 0.004, 0.0008, M.bezel), 0, 0.024, 0));
+  g.add(rbox(0.095, 0.011, 0.02, 0.004, M.walnut));
+  g.add(at(rboxC(0.088, 0.0015, 0.003, 0.0006, M.bezel), 0, 0.011, 0));
   const back = M.cardBack;
   const card = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.054, 0.0012), [back, back, back, back, M.cardFace, back]);
-  card.position.set(0, 0.045, 0.001);
+  card.position.set(0, 0.033, 0.001);
   card.rotation.x = -0.1;
   g.add(card);
   return g;
@@ -381,7 +383,7 @@ function printer() {
   g.add(at(new THREE.Mesh(new THREE.SphereGeometry(0.0028, 10, 8), M.led), -W / 2 + 0.025, h1 * 0.42, D / 2 + 0.002));
 
   // Receipt: rises from the slot, then curls forward
-  const len = 0.16, wid = 0.058, rise = 0.065, r = 0.036;
+  const len = 0.095, wid = 0.058, rise = 0.05, r = 0.034;
   const geo = new THREE.PlaneGeometry(wid, len, 1, 32);
   const p = geo.attributes.position;
   for (let i = 0; i < p.count; i++) {
@@ -406,11 +408,11 @@ function printer() {
 function diary() {
   const g = group('diary');
   const W = 0.15, D = 0.21;
-  g.add(rbox(W, 0.004, D, 0.002, M.diary));
-  g.add(at(rbox(W - 0.01, 0.02, D - 0.01, 0.002, M.pages), 0.003, 0.004, 0));
-  g.add(at(rbox(W, 0.004, D, 0.002, M.diary), 0, 0.024, 0));
-  g.add(at(rboxC(0.008, 0.028, D, 0.003, M.diary), -W / 2 + 0.003, 0.014, 0)); // spine
-  g.add(at(rbox(0.007, 0.0285, D + 0.002, 0.001, M.band), W / 2 - 0.025, 0, 0)); // elastic
+  g.add(rbox(W, 0.003, D, 0.0015, M.diary));
+  g.add(at(rbox(W - 0.01, 0.01, D - 0.01, 0.002, M.pages), 0.003, 0.003, 0));
+  g.add(at(rbox(W, 0.003, D, 0.0015, M.diary), 0, 0.013, 0));
+  g.add(at(rboxC(0.007, 0.016, D, 0.003, M.diary), -W / 2 + 0.003, 0.008, 0)); // spine
+  g.add(at(rbox(0.007, 0.0165, D + 0.002, 0.001, M.band), W / 2 - 0.025, 0, 0)); // elastic
   const pen = group('pen');
   const body = new THREE.Mesh(new THREE.CylinderGeometry(0.0045, 0.0045, 0.12, 16), M.pen);
   body.rotation.z = Math.PI / 2;
@@ -420,7 +422,7 @@ function diary() {
   tip.position.x = 0.067;
   pen.add(tip);
   pen.add(at(rboxC(0.04, 0.002, 0.003, 0.001, M.aluDark), -0.035, 0.005, 0)); // clip
-  pen.position.set(0, 0.033, 0.01);
+  pen.position.set(0, 0.0205, 0.01);
   pen.rotation.y = 0.65;
   g.add(pen);
   return g;
@@ -449,89 +451,193 @@ function mug() {
   return g;
 }
 
-function pot(rTop: number, rBot: number, h: number, m: THREE.Material) {
-  const lip = 0.012;
-  const g = group('pot', lathe([[0, 0.002], [rBot - 0.006, 0], [rBot, 0.006], [rTop - 0.004, h - 0.03], [rTop + lip, h - 0.028], [rTop + lip, h], [rTop - 0.006, h], [rTop - 0.01, h - 0.03], [0, h - 0.03]], m, 48));
-  g.add(at(cyl(rTop - 0.008, rTop - 0.008, 0.004, M.soil, 32), 0, h - 0.032, 0));
-  for (let i = 0; i < 7; i++) {
-    const a = T.rand() * Math.PI * 2, d = T.rand() * (rTop - 0.03);
-    g.add(at(new THREE.Mesh(new THREE.DodecahedronGeometry(0.006 + T.rand() * 0.006, 0), M.pebble), Math.cos(a) * d, h - 0.026, Math.sin(a) * d));
+/** Round planter: straight sides and a crisp rim, with soil and a few pebbles on top. */
+function planter(r: number, h: number, m: THREE.Material) {
+  const g = group('planter', cyl(r, r * 0.92, h, m, 64));
+  g.add(at(cyl(r - 0.004, r - 0.004, 0.003, M.soil, 48), 0, h - 0.001, 0));
+  for (let i = 0; i < 6; i++) {
+    const a = T.rand() * Math.PI * 2, d = T.rand() * (r - 0.015);
+    g.add(at(new THREE.Mesh(new THREE.DodecahedronGeometry(0.005 + T.rand() * 0.005, 0), M.pebble), Math.cos(a) * d, h + 0.003, Math.sin(a) * d));
   }
   return g;
 }
 
+/** Watering can with a flat-sided, crisp-edged oblong body, a filler neck, a long spout with a rose, and a handle. */
 function wateringCan() {
   const g = group('wateringCan');
-  g.add(lathe([[0, 0], [0.058, 0], [0.062, 0.006], [0.064, 0.1], [0.058, 0.118], [0.035, 0.128], [0.034, 0.136], [0.03, 0.136], [0.03, 0.128], [0, 0.128]], M.can));
-  g.add(tube([[0.05, 0.03, 0], [0.095, 0.075, 0], [0.125, 0.115, 0]], 0.008, M.can));
-  const rose = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.009, 0.022, 16), M.can);
-  rose.position.set(0.131, 0.123, 0);
+  g.add(rbox(0.13, 0.11, 0.07, 0.006, M.can));
+  g.add(at(cyl(0.02, 0.02, 0.014, M.can, 32), -0.035, 0.108, 0)); // filler neck
+  g.add(tube([[0.055, 0.03, 0], [0.1, 0.075, 0], [0.135, 0.118, 0]], 0.007, M.can));
+  const rose = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.008, 0.02, 16), M.can);
+  rose.position.set(0.141, 0.126, 0);
   rose.rotation.z = -0.75;
   g.add(rose);
-  g.add(tube([[-0.05, 0.1, 0], [-0.065, 0.16, 0], [-0.01, 0.19, 0], [0.035, 0.14, 0]], 0.007, M.can));
+  g.add(tube([[-0.058, 0.085, 0], [-0.07, 0.15, 0], [-0.015, 0.175, 0], [0.03, 0.11, 0]], 0.0065, M.can));
   return g;
 }
 
-const jadeLeafGeo = new THREE.SphereGeometry(1, 16, 10);
+const succLeafGeo = new THREE.SphereGeometry(1, 14, 10);
 
-/** Jade plant ("money plant" in feng shui): a rounded mound of plump, glossy, coin-shaped leaves in crossing pairs,
- *  sitting straight on a white pot (no stem showing). */
-function jadePlant() {
-  const g = group('jadePlant');
-  T.reseed(23);
-  const h = 0.15;
-  const plant = group('plant', pot(0.1, 0.075, h, M.whitePot));
-  const leaves = group('leaves');
-  const base = h - 0.03;
-  // No visible stem: leaf clusters spread evenly over a low dome (a golden-angle spiral) that sits right on the pot,
-  // its lowest ring spilling just over the rim, so the plant reads as one soft round mound
-  const tips: [number, number, number][] = Array.from({ length: 19 }, (_, i) => {
-    const az = i * 2.4, tilt = 0.1 + (i / 18) * 1.4;
-    return [Math.sin(tilt) * Math.cos(az) * 0.105, base + 0.012 + Math.cos(tilt) * 0.085, Math.sin(tilt) * Math.sin(az) * 0.105];
-  });
-  const v = new THREE.Vector3();
-  tips.forEach((tip, b) => {
-    const [x, , z] = tip;
-    const mid: [number, number, number] = [x * 0.6, base, z * 0.6]; // the cluster leans in toward the soil at the centre
-    // Three crossing pairs of leaves down from the tip: the youngest small and pale, the older ones plump and spreading
-    const out = Math.atan2(x, z);
-    for (let k = 0; k < 3; k++) {
-      v.set(...tip).lerp(new THREE.Vector3(...mid), k * 0.28);
-      const size = [0.75, 1.15, 1.4][k] * (0.9 + T.rand() * 0.2);
-      for (const side of [-1, 1]) {
-        const leaf = new THREE.Mesh(jadeLeafGeo, k === 0 ? M.jadeYoung : M.jade);
-        leaf.scale.set(0.017 * size, 0.0075 * size, 0.024 * size);
-        leaf.position.z = 0.022 * size;
-        const pivot = group('leaf', leaf);
-        pivot.position.copy(v);
-        pivot.rotation.order = 'YXZ';
-        pivot.rotation.y = out + (k % 2 ? Math.PI / 2 : 0) + (side > 0 ? 0 : Math.PI) + (T.rand() - 0.5) * 0.3;
-        pivot.rotation.x = -(0.95 - k * 0.3) + (T.rand() - 0.5) * 0.2;
-        pivot.rotation.z = (T.rand() - 0.5) * 0.4;
-        leaves.add(pivot);
-      }
-    }
-    if (b % 3 === 0) leaves.add(at(new THREE.Mesh(new THREE.SphereGeometry(0.008, 10, 8), M.jadeYoung), ...tip)); // bud
-  });
-  onTick(leaves, (t) => {
-    leaves.rotation.z = Math.sin(t * 0.9) * 0.02;
-    leaves.rotation.x = Math.sin(t * 0.7 + 1) * 0.015;
-  });
-  plant.add(leaves);
-  g.add(plant);
+/** Small echeveria succulent: a tight rosette of plump, rounded, blue-green leaves with blushed tips, in a little round
+ *  white planter. Rounded leaves, not spiky ones, per feng shui. */
+function succulent() {
+  const g = group('succulent');
+  T.reseed(41);
+  const h = 0.06;
+  g.add(planter(0.045, h, M.whitePot));
+  const rosette = group('rosette');
+  rosette.position.y = h - 0.006;
+  // Leaves spiral out from the centre (golden angle): small and upright inside, longer and flatter outside
+  const n = 34;
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1), az = i * 2.4;
+    const len = 0.012 + t * 0.024, wid = 0.008 + t * 0.011;
+    const leaf = new THREE.Mesh(succLeafGeo, i < 6 ? M.succYoung : M.succ);
+    leaf.scale.set(wid, 0.006 + t * 0.002, len);
+    leaf.position.z = len * 0.85;
+    const pivot = group('leaf', leaf);
+    pivot.rotation.order = 'YXZ';
+    pivot.rotation.y = az;
+    pivot.rotation.x = -(1.3 - t * 0.8) + (T.rand() - 0.5) * 0.12; // inner leaves stand up, outer ones open out
+    pivot.position.y = 0.006 + (1 - t) * 0.01;
+    rosette.add(pivot);
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(wid * 0.22, 8, 6), M.succTip);
+    tip.position.z = len * 1.75;
+    tip.scale.y = 0.5;
+    pivot.add(tip);
+  }
+  g.add(rosette);
   return g;
 }
 
-/** Mushroom desk lamp: a round foot, a thin stem and a domed shade with a warm glow underneath. */
+/** Vintage banker's lamp: a stepped brass foot, a curved brass arm and a long green glass shade with a brass pull
+ *  chain. It starts off; userData.setOn(true) lights the bulb and the shade and casts a soft warm wash over the desk. */
 function lamp() {
   const g = group('lamp');
-  g.add(lathe([[0, 0], [0.058, 0], [0.062, 0.006], [0.05, 0.014], [0, 0.016]], M.lampShade));
-  g.add(at(cyl(0.006, 0.007, 0.2, M.lampShade, 16), 0, 0.014, 0));
-  g.add(at(lathe([[0, 0.075], [0.03, 0.072], [0.06, 0.055], [0.08, 0.025], [0.088, 0], [0.084, -0.002], [0, -0.002]], M.lampShade, 48), 0, 0.2, 0));
-  g.add(at(new THREE.Mesh(new THREE.CircleGeometry(0.07, 32).rotateX(Math.PI / 2), M.lampGlow), 0, 0.199, 0));
-  const light = new THREE.PointLight('#ffb36b', 0.6, 1.2, 1.5);
-  light.position.y = 0.18;
-  g.add(light);
+  g.add(lathe([[0, 0], [0.075, 0], [0.078, 0.008], [0.072, 0.016], [0.052, 0.026], [0.036, 0.04], [0.03, 0.055], [0.022, 0.06], [0.027, 0.072], [0.02, 0.09], [0.012, 0.1], [0, 0.1]], M.brass, 48));
+  const shadeY = 0.27, shadeZ = 0.04;
+  g.add(taper([[0, 0.095, -0.005], [0, 0.17, -0.03], [0, 0.23, -0.035], [0, shadeY - 0.01, shadeZ - 0.055]], 0.007, 0.006, M.brass, 24, 10));
+  // Shade: half a cylinder lying along x, open underneath, green outside and lit warm inside, tipped a little forward
+  const L = 0.2, R = 0.055;
+  const shade = group('shade');
+  const arc = new THREE.CylinderGeometry(R, R, L, 32, 1, true, 0, Math.PI).rotateZ(Math.PI / 2);
+  shade.add(new THREE.Mesh(arc, M.greenGlass), new THREE.Mesh(arc, M.shadeInside));
+  for (const s of [-1, 1]) {
+    const cap = new THREE.Mesh(new THREE.CircleGeometry(R, 16, 0, Math.PI).rotateY((s * Math.PI) / 2), M.greenGlass);
+    cap.position.x = (s * L) / 2;
+    shade.add(cap);
+  }
+  shade.add(at(new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, L + 0.006, 8).rotateZ(Math.PI / 2), M.brass), 0, 0, -R)); // brass rim at the back
+  shade.add(at(new THREE.Mesh(new THREE.SphereGeometry(0.014, 12, 8), M.lampGlow), 0, 0.012, 0)); // bulb
+  shade.scale.set(1, 0.85, 0.85);
+  shade.position.set(0, shadeY, shadeZ);
+  shade.rotation.x = 0.22;
+  g.add(shade);
+  g.add(tube([[0.05, shadeY - 0.01, shadeZ + 0.01], [0.05, shadeY - 0.06, shadeZ + 0.012], [0.05, shadeY - 0.1, shadeZ + 0.01]], 0.0012, M.brass, 8)); // pull chain
+  g.add(at(new THREE.Mesh(new THREE.SphereGeometry(0.003, 8, 6), M.brass), 0.05, shadeY - 0.1, shadeZ + 0.01));
+  const light = new THREE.SpotLight('#ffd9a8', 0, 2, 1.35, 1, 1.2);
+  light.position.set(0, shadeY - 0.01, shadeZ);
+  light.target.position.set(0, 0, shadeZ + 0.12);
+  g.add(light, light.target);
+  g.userData.setOn = (on: boolean) => {
+    light.intensity = on ? 0.35 : 0;
+    (M.shadeInside as THREE.MeshStandardMaterial).emissiveIntensity = on ? 0.9 : 0.04;
+    (M.greenGlass as THREE.MeshPhysicalMaterial).emissiveIntensity = on ? 0.6 : 0.08;
+    M.lampGlow.color.set(on ? '#ffd9a8' : '#4a4036');
+  };
+  g.userData.setOn(false);
+  return g;
+}
+
+/** Collectible figure of Son Goku on a round stand, in realistic proportions (about 6.5 heads tall, 18 cm): a
+ *  muscular build in the orange gi over a blue undershirt, blue belt with its knot, wristbands and boots, a face with
+ *  eyes, brows, nose and ears, and his black hair in big spikes swept up and back, with bangs over the forehead. */
+function figurine() {
+  const g = group('figurine');
+  const limb = (pts: [number, number, number][], r0: number, r1: number, m: THREE.Material) => g.add(taper(pts, r0, r1, m, 16, 12));
+  const ball = (r: number, m: THREE.Material, x: number, y: number, z: number, sx = 1, sy = 1, sz = 1) => {
+    const o = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), m);
+    o.position.set(x, y, z);
+    o.scale.set(sx, sy, sz);
+    g.add(o);
+    return o;
+  };
+  g.add(cyl(0.042, 0.045, 0.008, M.bezel, 40));
+  const b = 0.008; // top of the stand
+
+  // Boots and baggy trousers, legs a little apart
+  for (const s of [-1, 1]) {
+    ball(0.011, M.figBlue, s * 0.017, b + 0.008, 0.004, 0.9, 0.8, 1.45); // boot foot
+    g.add(at(cyl(0.0085, 0.0095, 0.022, M.figBlue, 16), s * 0.017, b + 0.004, 0)); // boot shaft
+    limb([[s * 0.011, b + 0.084, 0], [s * 0.016, b + 0.055, 0.003], [s * 0.017, b + 0.026, 0]], 0.0125, 0.0095, M.figGi);
+  }
+  // Torso: gi top, flatter front to back, broad at the chest and shoulders
+  const torso = lathe([[0.016, 0], [0.0175, 0.012], [0.021, 0.03], [0.023, 0.042], [0.02, 0.05], [0.009, 0.056], [0, 0.056]], M.figGi, 32);
+  torso.position.y = b + 0.08;
+  torso.scale.z = 0.72;
+  g.add(torso);
+  // Blue undershirt showing in the V of the gi, and the blue belt with its knot and two tails
+  const v = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.024, 3).rotateZ(Math.PI), M.figBlue);
+  v.position.set(0, b + 0.118, 0.0128);
+  v.rotation.x = -0.25;
+  v.scale.z = 0.3;
+  g.add(v);
+  const belt = new THREE.Mesh(new THREE.TorusGeometry(0.0165, 0.0035, 8, 28).rotateX(Math.PI / 2), M.figBlue);
+  belt.position.y = b + 0.084;
+  belt.scale.z = 0.74;
+  g.add(belt);
+  ball(0.0042, M.figBlue, -0.006, b + 0.084, 0.0125);
+  for (const dx of [-0.01, -0.003]) g.add(at(rboxC(0.005, 0.016, 0.002, 0.001, M.figBlue), dx, b + 0.075, 0.0125));
+
+  // Arms: blue short sleeves at the shoulders, muscular bare arms, blue wristbands, fists
+  for (const s of [-1, 1]) {
+    const sh: [number, number, number] = [s * 0.025, b + 0.126, 0], el: [number, number, number] = [s * 0.032, b + 0.1, 0.002], wr: [number, number, number] = [s * 0.034, b + 0.077, 0.005];
+    ball(0.0095, M.figBlue, sh[0], sh[1] - 0.002, 0, 1, 0.9, 0.9);
+    limb([sh, [s * 0.03, b + 0.113, 0.001], el], 0.0085, 0.0068, M.figSkin);
+    limb([el, [s * 0.033, b + 0.088, 0.004], wr], 0.0072, 0.0055, M.figSkin);
+    g.add(at(cyl(0.0068, 0.0068, 0.008, M.figBlue, 14), wr[0], wr[1] - 0.003, wr[2])); // wristband
+    ball(0.0072, M.figSkin, wr[0], wr[1] - 0.009, wr[2], 0.9, 1, 1.05); // fist
+  }
+
+  // Neck and head
+  g.add(at(cyl(0.0062, 0.007, 0.01, M.figSkin, 16), 0, b + 0.134, 0));
+  const hy = b + 0.153;
+  ball(0.0135, M.figSkin, 0, hy, 0.001, 0.92, 1.12, 1);
+  ball(0.0075, M.figSkin, 0, hy - 0.009, 0.004, 1, 0.8, 1); // jaw
+  for (const s of [-1, 1]) {
+    ball(0.0035, M.figSkin, s * 0.0128, hy, -0.001, 0.5, 1, 0.8); // ear
+    ball(0.0026, M.figWhite, s * 0.0052, hy + 0.0012, 0.0118, 1.3, 0.8, 0.5); // eye white
+    ball(0.0013, M.figHair, s * 0.0049, hy + 0.0012, 0.0128); // pupil
+    const brow = at(rboxC(0.0068, 0.0013, 0.0015, 0.0006, M.figHair), s * 0.0052, hy + 0.0052, 0.0122);
+    brow.rotation.z = s * -0.3;
+    g.add(brow);
+  }
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.0018, 0.004, 8).rotateX(Math.PI / 2), M.figSkin);
+  nose.position.set(0, hy - 0.002, 0.0138);
+  g.add(nose);
+
+  // Hair: a cap over the crown, big spikes swept up, back and out, and bangs falling over the forehead
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.0146, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.5), M.figHair);
+  cap.position.set(0, hy + 0.006, 0.0003);
+  cap.scale.set(0.97, 1.2, 1.03);
+  g.add(cap);
+  ball(0.0135, M.figHair, 0, hy + 0.001, -0.004, 0.95, 1.05, 0.9); // back of the head
+  const up = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3();
+  // [direction x, y, z, length, base radius]
+  const spikes: [number, number, number, number, number][] = [
+    [0.15, 1, -0.2, 0.034, 0.0075], [-0.35, 0.95, -0.25, 0.032, 0.007], [0.55, 0.8, -0.3, 0.03, 0.007], [-0.7, 0.65, -0.3, 0.03, 0.007],
+    [0.85, 0.35, -0.2, 0.026, 0.0065], [-0.9, 0.3, -0.2, 0.026, 0.0065], [0.2, 0.5, -0.9, 0.032, 0.0075], [-0.3, 0.45, -0.9, 0.03, 0.007],
+    [0.6, 0.15, -0.8, 0.026, 0.0065], [-0.65, 0.1, -0.8, 0.026, 0.0065], [0, 0.1, -1, 0.024, 0.0065],
+    [0.25, -0.35, 0.95, 0.012, 0.0035], [-0.15, -0.4, 0.95, 0.013, 0.0035], [0.5, -0.25, 0.85, 0.01, 0.003], [-0.5, -0.2, 0.85, 0.011, 0.003], // bangs
+  ];
+  for (const [x, y, z, l, r] of spikes) {
+    dir.set(x, y, z).normalize();
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(r * 1.45, l * 1.1, 10), M.figHair);
+    spike.quaternion.setFromUnitVectors(up, dir);
+    const bang = z > 0.5;
+    spike.position.set(0, hy + (bang ? 0.008 : 0.004), 0).addScaledVector(dir, (bang ? 0.012 : 0.01) + l / 2);
+    g.add(spike);
+  }
   return g;
 }
 
@@ -545,9 +651,8 @@ function paper() {
 const big = <O extends THREE.Object3D>(o: O, s: number) => (o.scale.setScalar(s), o);
 
 /** The desk: a wide pale birch top with softly rounded corners on four slim white metal legs. On top, two tidy rows
- *  on the same five evenly spaced columns, centred on the laptop. Back: printer, tablet, laptop (with sticky notes on
- *  its screen), phone, jade plant with its watering can. Front: a sheet of paper, the business card, the notebook,
- *  the mug and the lamp. */
+ *  on five evenly spaced columns. Back: a figurine behind the printer, the tablet, the laptop, the phone and the green banker's lamp. Front: the printer standing
+ *  on a sheet of paper, the business card, the notebook, the mug, and a small succulent with its watering can. */
 export function desk() {
   const g = group('desk');
   const top = 0.75, W = 1.6, D = 0.8, TT = 0.035;
@@ -584,17 +689,18 @@ export function desk() {
   // Things on the desk: [object, x, z, turn], in two rows on the same five columns
   const S = 1.3, col = [-0.66, -0.37, 0, 0.37, 0.66], back = -0.17, front = 0.22;
   const things: [THREE.Object3D, number, number, number][] = [
-    [big(printer(), S), col[0], back, 0.1],
-    [big(tablet(), S), col[1], back, 0.15],
-    [big(laptop(), S), col[2], back - 0.04, 0],
-    [big(phone(), S), col[3], back, -0.15],
-    [big(jadePlant(), 1.15), col[4] - 0.03, back - 0.02, 0],
-    [big(wateringCan(), 0.7), col[4] + 0.13, back + 0.08, 2.4],
-    [paper(), col[0], front, 0.05],
-    [big(cardStand(), 1.5), col[1], front, 0],
-    [big(diary(), S), col[2], front + 0.01, -0.08],
-    [big(mug(), S), col[3], front, -0.9],
-    [big(lamp(), 1.1), col[4], front - 0.02, 0],
+    [big(figurine(), 1.1), col[0] - 0.04, back - 0.08, 0.2],
+    [paper(), col[0], front - 0.05, 0.05],
+    [big(printer(), 1.0), col[0], front - 0.09, 0.05], // standing on the paper, which sticks out in front of it
+    [big(tablet(), S), col[1] - 0.07, back + 0.05, 0.2],
+    [big(laptop(), S), col[2], back + 0.05, 0],
+    [big(phone(), S), col[3] + 0.04, back - 0.02, -0.15],
+    [big(lamp(), 1.1), col[4], back - 0.06, -0.25],
+    [big(cardStand(), 1.4), col[1], front, 0],
+    [big(mug(), S), col[2], front, -0.9],
+    [big(diary(), S), col[3] - 0.02, front - 0.03, -0.08],
+    [big(succulent(), 1.1), col[4] - 0.06, front, 0],
+    [big(wateringCan(), 0.6), col[4] + 0.06, front - 0.25, Math.PI + 0.25],
   ];
   for (const [o, x, z, ry] of things) {
     o.position.set(x, top, z);

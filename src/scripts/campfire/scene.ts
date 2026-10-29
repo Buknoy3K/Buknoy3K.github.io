@@ -11,21 +11,19 @@ import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer
 import { fireGarden, kiosk, desk, type Tick } from './models';
 
 const GARDEN_X = -1.75, KIOSK_X = 1.3; // the desk stands at x = 0, between them
-const LOOK = new THREE.Vector3(0.0, 0.86, -0.04); // the camera circles this point, a little above the desktop
-const DIST = 2.2; // ...from this far away, at the default zoom
-const START = { yaw: THREE.MathUtils.degToRad(-14), pitch: THREE.MathUtils.degToRad(31) }; // opening view: a little from the desk's left
+const LOOK = new THREE.Vector3(-0.1, 0.7, -0.04); // the camera circles this point, just above the desktop
+const DIST = 3.1; // ...from this far away, at the default zoom
+const START = { yaw: 0, pitch: THREE.MathUtils.degToRad(23) }; // opening view: straight on, showing the garden, desk and kiosk
 const BASE_FOV = 47.5;
 const YAW = THREE.MathUtils.degToRad(40); // how far a sideways drag swings the camera round to either side
-const PITCH = { min: THREE.MathUtils.degToRad(24), max: THREE.MathUtils.degToRad(55) }; // how low and high an up-down drag swings it
-const ZOOM = { in: 0.5, out: 1.3 }; // fully zoomed in or out, the camera is this many times DIST away
+const PITCH = { min: THREE.MathUtils.degToRad(18), max: THREE.MathUtils.degToRad(55) }; // how low and high an up-down drag swings it
+const ZOOM = { in: 0.4, out: 1.25 }; // fully zoomed in or out, the camera is this many times DIST away
 const SITE_W = 1440; // the laptop's website is laid out at this width (a desktop layout), then scaled onto the screen
 const SCREEN_FILL = 0.9; // focused on the laptop, its screen fills this share of the window
 
-export function mountCampfire(canvas: HTMLCanvasElement, siteUrl: string, onFocus: (focused: boolean) => void) {
+export function mountCampfire(canvas: HTMLCanvasElement, siteUrl: string, onFocus: (focused: boolean) => void, onLamp: (on: boolean) => void) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
   const scene = new THREE.Scene();
@@ -36,34 +34,14 @@ export function mountCampfire(canvas: HTMLCanvasElement, siteUrl: string, onFocu
   // A soft studio environment gives glass, metal and glaze something to reflect (no visible background).
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environmentIntensity = 0.32;
+  scene.environmentIntensity = 0.12;
 
-  // Night light: dim cool fill, a moon key, a cool rim from behind to lift edges off the black, and the fire.
-  scene.add(new THREE.HemisphereLight('#9fb3cc', '#2a1d14', 0.55));
-  const moon = new THREE.DirectionalLight('#dfe6ff', 1.1);
-  // Aimed at the middle of the row, with a shadow box wide enough for all of it
-  moon.position.set(KIOSK_X / 2 - 4, 6, 3);
-  moon.target.position.set(KIOSK_X / 2, 0, 0);
-  scene.add(moon.target);
-  moon.castShadow = true;
-  moon.shadow.mapSize.set(2048, 2048);
-  moon.shadow.bias = -0.0004;
-  moon.shadow.radius = 4;
-  Object.assign(moon.shadow.camera, { left: -3.5, right: 3.5, top: 3.5, bottom: -3.5 });
-  scene.add(moon);
-  const rim = new THREE.DirectionalLight('#86a2ff', 0.9);
-  rim.position.set(1, 3, -5);
-  scene.add(rim);
-  const fireLight = new THREE.PointLight('#ff9142', 7, 7, 1.5);
-  fireLight.castShadow = true;
-  fireLight.shadow.bias = -0.002;
+  // The campfire is the only real light: everything is lit from the fire (no shadows). A faint cool ambient
+  // keeps the far sides from going pure black.
+  scene.add(new THREE.HemisphereLight('#7f93b0', '#1a120c', 0.18));
+  const fireLight = new THREE.PointLight('#ff9142', 9, 0, 1.1);
   scene.add(fireLight);
 
-  // No visible ground: objects float on black, with only their shadows drawn.
-  const shadowCatcher = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMaterial({ opacity: 0.45 }));
-  shadowCatcher.rotation.x = -Math.PI / 2;
-  shadowCatcher.receiveShadow = true;
-  scene.add(shadowCatcher);
 
   const place = (o: THREE.Object3D, x: number, z: number, ry = 0) => {
     o.position.set(x, 0, z);
@@ -74,7 +52,7 @@ export function mountCampfire(canvas: HTMLCanvasElement, siteUrl: string, onFocu
   // One row, left to right: fire garden, desk, kiosk
   const garden = place(fireGarden(), GARDEN_X, -0.2);
   garden.scale.setScalar(0.7);
-  fireLight.position.set(garden.position.x, 0.3, garden.position.z + 0.1);
+  fireLight.position.set(garden.position.x, 0.95, garden.position.z + 0.1); // the glow above the flames, high enough to reach the desktop
   place(desk(), 0, 0);
   place(kiosk(), KIOSK_X, -0.15);
 
@@ -117,21 +95,15 @@ export function mountCampfire(canvas: HTMLCanvasElement, siteUrl: string, onFocu
   Object.assign(css.domElement.style, { position: 'fixed', inset: '0', pointerEvents: 'none' });
   canvas.after(css.domElement);
 
-  // Solid surfaces cast and receive shadows; flames, glows and see-through things don't.
   const ticks: Tick[] = [];
   scene.traverse((o) => {
     if (o.userData.ticks) ticks.push(...o.userData.ticks);
-    if ((o as THREE.Mesh).isMesh && o !== shadowCatcher) {
-      const mats = [(o as THREE.Mesh).material].flat() as THREE.Material[];
-      const solid = mats.every((m) => !m.transparent && !(m as THREE.MeshBasicMaterial).isMeshBasicMaterial);
-      o.castShadow = solid;
-      o.receiveShadow = solid;
-    }
   });
   const clock = new THREE.Clock();
 
   // Drag swings the camera round the desk (want.x, -1..1 of YAW) and over it (want.y, -1..1 of the pitch range); it
-  // eases toward where the pointer left it. Dragging right turns the desk to the right, like spinning a turntable.
+  // eases toward where the pointer left it. Dragging right turns the desk to the right, like spinning a turntable, and
+  // dragging down tips the desk toward you, so you look down on it.
   // Zoom (0 = default view, 1 = closest) eases the same way, and so does focus (0 = the scene, 1 = the laptop screen).
   const want = new THREE.Vector2(START.yaw / YAW, ((START.pitch - PITCH.min) / (PITCH.max - PITCH.min)) * 2 - 1);
   const now = want.clone();
@@ -153,10 +125,18 @@ export function mountCampfire(canvas: HTMLCanvasElement, siteUrl: string, onFocu
 
   // A click (a press that barely moves) on the laptop opens it; anywhere else while focused, it closes.
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-  const overLaptop = (e: PointerEvent) => {
+  const over = (e: PointerEvent, o: THREE.Object3D) => {
     ndc.set((e.clientX / canvas.clientWidth) * 2 - 1, -(e.clientY / canvas.clientHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    return ray.intersectObject(laptop, true).length > 0;
+    return ray.intersectObject(o, true).length > 0;
+  };
+  // Clicking the lamp (or the lamp button) switches it on and off
+  const lamp = scene.getObjectByName('lamp')!;
+  let lampOn = false;
+  const toggleLamp = () => {
+    lampOn = !lampOn;
+    lamp.userData.setOn(lampOn);
+    return lampOn;
   };
 
   const pointers = new Map<number, { x: number; y: number }>();
@@ -177,7 +157,7 @@ export function mountCampfire(canvas: HTMLCanvasElement, siteUrl: string, onFocu
   });
   canvas.addEventListener('pointermove', (e) => {
     if (!pointers.has(e.pointerId)) {
-      if (e.pointerType === 'mouse' && !focusWant) canvas.style.cursor = overLaptop(e) ? 'pointer' : '';
+      if (e.pointerType === 'mouse' && !focusWant) canvas.style.cursor = over(e, laptop) || over(e, lamp) ? 'pointer' : '';
       return;
     }
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -187,7 +167,7 @@ export function mountCampfire(canvas: HTMLCanvasElement, siteUrl: string, onFocu
     } else if (drag) {
       want.set(
         THREE.MathUtils.clamp(drag.from.x - (e.clientX - drag.x) * s, -1, 1),
-        THREE.MathUtils.clamp(drag.from.y - (e.clientY - drag.y) * s, -1, 1),
+        THREE.MathUtils.clamp(drag.from.y + (e.clientY - drag.y) * s, -1, 1),
       );
     }
   });
@@ -196,7 +176,8 @@ export function mountCampfire(canvas: HTMLCanvasElement, siteUrl: string, onFocu
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinch = null;
     drag = null;
-    if (click && overLaptop(e)) setFocus(true);
+    if (click && over(e, laptop)) setFocus(true);
+    else if (click && over(e, lamp)) onLamp(toggleLamp());
   };
   canvas.addEventListener('pointerup', end);
   canvas.addEventListener('pointercancel', end);
@@ -232,7 +213,7 @@ export function mountCampfire(canvas: HTMLCanvasElement, siteUrl: string, onFocu
   renderer.setAnimationLoop(() => {
     const t = clock.getElapsedTime();
     for (const tick of ticks) tick(t);
-    fireLight.intensity = 7 + Math.sin(t * 11) * 0.6 + Math.sin(t * 6.3) * 0.8 + Math.sin(t * 23) * 0.3;
+    fireLight.intensity = 9 + Math.sin(t * 11) * 0.7 + Math.sin(t * 6.3) * 0.9 + Math.sin(t * 23) * 0.35;
     now.lerp(want, 0.08);
     zoomNow += (zoomWant - zoomNow) * 0.08;
     focusNow += (focusWant - focusNow) * 0.07;
@@ -279,5 +260,5 @@ export function mountCampfire(canvas: HTMLCanvasElement, siteUrl: string, onFocu
     css.render(scene, camera);
   });
 
-  return { zoomBy, exitFocus: () => setFocus(false) };
+  return { zoomBy, exitFocus: () => setFocus(false), toggleLamp };
 }
