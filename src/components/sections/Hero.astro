@@ -1,34 +1,74 @@
 ---
-import { Image } from 'astro:assets';
-import { hero, nav } from '../../config/site';
-import farms from '../../assets/world/la-trinidad-strawberry-farms-la-trinidad-benguet.jpg';
+import { brand, hero, nav } from '../../config/site';
+
+// Each chapter card's top strip is the colour of the chapter it opens
+const strip: Record<string, string> = { night: 'var(--night)', pine: 'var(--pine)', resin: 'var(--resin)', fog: '#b9bdb3', ember: 'var(--ember)' };
 ---
 
+<!-- A white cover: the name and the line on the left, glimpses of the systems we build on the right, and the five
+     chapters along the bottom. The laptop in the campfire scene opens on this. -->
 <section class="hero" id="top" data-hero>
-  <div class="panel">
-    <Image
-      src={farms}
-      alt="Strawberry farms in La Trinidad, Benguet, under a clear sky"
-      widths={[800, 1280, 1920]}
-      sizes="(max-width: 760px) 100vw, 84vw"
-      loading="eager"
-      fetchpriority="high"
-      class="photo"
-    />
-    <div class="scrim" aria-hidden="true"></div>
+  <header class="top">
+    <span class="mark">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+        <path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2.5 1.4-4 2.6-5.2.3 1.6 1 2.6 2.2 3.2C11 8.6 11 5 12 2z" fill="var(--ember)" />
+        <path d="M12 12c.6 1.6 2.2 2.4 2.2 4.4a2.2 2.2 0 0 1-4.4 0c0-1.2.6-1.9 1.2-2.5.1.6.4 1 .9 1.3-.2-1.1-.2-2.1.1-3.2z" fill="var(--resin)" />
+      </svg>
+      {brand.name}
+    </span>
+    <span class="status"><i></i>{hero.eyebrow}</span>
+    <a class="demo" href="#contact">Request a demo <span aria-hidden="true">→</span></a>
+  </header>
+
+  <div class="stage">
     <div class="title">
-      <h1><span>Saleng</span> <span>Labs</span></h1>
-      <p class="subtitle">{hero.subtitle}</p>
+      <p class="kicker">{brand.tagline}</p>
+      <h1>Saleng<br />Labs<span class="dot">.</span></h1>
+      <p class="line">Stop doing it the <em>hard way</em>.</p>
+      <p class="text">{hero.text}</p>
     </div>
-    <p class="text">{hero.text}</p>
-    <a href="#contact" class="btn btn-light cta">Request a demo <span class="arrow" aria-hidden="true">→</span></a>
+
+    <!-- Glimpses of the systems: a receipt, a booking day, stock levels and a small automation, drawn in HTML -->
+    <div class="glimpse" aria-hidden="true">
+      <div class="card receipt">
+        <div class="card-h"><span>POS</span><b>Order #0142</b></div>
+        <ul>
+          <li><span>2 × Strawberry taho</span><span>₱60</span></li>
+          <li><span>1 × Ube jam, 250g</span><span>₱180</span></li>
+          <li><span>3 × Choco crinkles</span><span>₱45</span></li>
+        </ul>
+        <div class="total"><span>Total</span><b>₱285.00</b></div>
+        <div class="paid">Paid · GCash</div>
+      </div>
+
+      <div class="card booking">
+        <div class="card-h"><span>Booking</span><b>Thu, Oct 29</b></div>
+        <div class="slots">
+          <span class="on">9:00</span><span class="on">10:00</span><span>11:00</span>
+          <span class="on">1:00</span><span>2:00</span><span class="on">3:00</span>
+        </div>
+      </div>
+
+      <div class="card stock">
+        <div class="card-h"><span>Inventory</span><b>This week</b></div>
+        <div class="bar"><span>Flour</span><i style="--v: 82%"></i></div>
+        <div class="bar"><span>Sugar</span><i style="--v: 54%"></i></div>
+        <div class="bar low"><span>Eggs</span><i style="--v: 18%"></i></div>
+        <p class="warn">Eggs running low · reorder sent</p>
+      </div>
+
+      <div class="card flow">
+        <span class="node">Form</span><span class="wire"></span><span class="node">Sheet</span><span class="wire"></span><span class="node ok">SMS ✓</span>
+      </div>
+    </div>
   </div>
 
-  <nav class="swatches" aria-label="Chapters">
-    {nav.map((l) => (
-      <a href={l.href} class={`swatch field field-${l.field}`}>
-        <span>{l.label}</span>
-        <span class="arrow" aria-hidden="true">↓</span>
+  <nav class="chapters" aria-label="Chapters">
+    {nav.map((l, i) => (
+      <a href={l.href} style={`--c: ${strip[l.field]}`}>
+        <span class="row"><span class="n">0{i + 1}</span><svg class="arrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 2v11M3.5 8.5 8 13l4.5-4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
+        <span class="label">{l.label}</span>
+        <span class="hint">{l.hint}</span>
       </a>
     ))}
   </nav>
@@ -36,77 +76,115 @@ import farms from '../../assets/world/la-trinidad-strawberry-farms-la-trinidad-b
 
 <style>
   .hero {
-    display: grid;
-    grid-template-columns: 5fr 1fr;
-    height: 100svh;
-    min-height: 640px;
-    padding: 10px;
-    background: var(--fog);
-  }
-  .panel {
+    --line: #e8e8e4;
+    --muted: #868a90;
+    --accent-ink: #13794a;
     position: relative;
-    overflow: hidden;
-    background: var(--night);
-    color: var(--fog);
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    grid-template-rows: 1fr auto;
-    padding: 28px;
-    gap: 0 24px;
+    grid-template-rows: auto 1fr auto;
+    height: 100svh;
+    min-height: 680px;
+    padding: 28px clamp(16px, 4vw, 56px) 28px;
+    color: var(--night);
+    background:
+      radial-gradient(circle at 78% 42%, #fff3e6 0, transparent 38%),
+      radial-gradient(#e4e4df 1px, transparent 1.2px) 0 0 / 24px 24px,
+      #fff;
   }
-  .photo {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center 70%;
-    animation: drift 24s ease-in-out infinite alternate;
-    transform-origin: 50% 80%;
-  }
-  @keyframes drift {
-    from { transform: scale(1.02); }
-    to { transform: scale(1.09) translateY(-1%); }
-  }
-  /* A flat neutral veil so white type holds on the sky */
-  .scrim { position: absolute; inset: 0; background: rgba(21, 26, 22, 0.28); }
-  .title, .text, .cta { position: relative; }
-  .title { grid-column: 1 / -1; align-self: start; margin-top: 10vh; text-align: center; }
-  h1 { font-size: var(--step-display); line-height: 0.86; }
-  h1 span { display: block; }
-  .subtitle { margin-top: 36px; font-size: var(--step-lead); font-weight: 500; }
-  .text { grid-column: 1 / 6; grid-row: 2; align-self: end; font-size: var(--step-body); line-height: 1.45; max-width: 38ch; }
-  .cta { grid-column: 6 / 13; grid-row: 2; justify-self: end; align-self: end; }
 
-  .swatches { display: grid; grid-template-rows: repeat(5, 1fr); }
-  .swatch {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 20px;
-    font-weight: 500;
-    font-size: var(--step-body);
-    text-decoration: none;
+  .top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+  .mark { display: inline-flex; align-items: center; gap: 8px; font: 700 16px/1 var(--display); }
+  .status {
+    display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border: 1px solid var(--line); border-radius: 99px;
+    background: #fff; font: 500 12px/1 'Red Hat Mono', monospace; letter-spacing: 0.04em; text-transform: uppercase; color: #4c5056;
   }
-  .swatch.field-fog { --bg: var(--fog-2); }
-  .swatch .arrow { transition: transform 240ms var(--ease-out); }
+  .status i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 #3ecf8e88; }
+    70%, 100% { box-shadow: 0 0 0 7px #3ecf8e00; }
+  }
+  .demo {
+    justify-self: end; padding: 10px 18px; border-radius: 99px; background: var(--night); color: #fff;
+    font-size: 14px; font-weight: 500; line-height: 1; text-decoration: none; transition: background 200ms var(--ease-out);
+  }
+  .demo:hover { background: var(--pine); }
+  .demo:active { transform: scale(0.97); }
+
+  .stage { display: grid; grid-template-columns: 1.05fr 1fr; align-items: center; gap: 48px; }
+  .kicker { margin-bottom: 18px; font: 500 13px/1 'Red Hat Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  h1 { font: 900 clamp(64px, 9.4vw, 140px)/0.86 var(--display); letter-spacing: -0.04em; }
+  .dot { color: var(--ember); }
+  .line { margin-top: 26px; font-size: var(--step-lead); font-weight: 500; line-height: 1.2; }
+  .line em { font-style: normal; text-decoration: underline; text-decoration-color: var(--ember); text-decoration-thickness: 3px; text-underline-offset: 6px; }
+  .text { max-width: 470px; margin-top: 16px; color: #5c6066; font-size: 15px; line-height: 1.5; }
+
+  .glimpse { position: relative; height: 480px; }
+  .card {
+    position: absolute; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px;
+    box-shadow: 0 1px 2px #0000000a, 0 18px 40px -18px #0000002e; font-size: 13px; line-height: 1.5;
+  }
+  .card-h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .card-h span { font: 500 11px/1 'Red Hat Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .card-h b { font: 700 14px/1 var(--display); }
+
+  .receipt { left: 4%; top: 6%; width: 290px; transform: rotate(-2.5deg); }
+  .receipt ul { list-style: none; padding: 0 0 10px; border-bottom: 1px dashed #d6d6d0; }
+  .receipt li { display: flex; justify-content: space-between; padding: 4px 0; color: #3c4046; }
+  .total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 10px; }
+  .total b { font: 900 22px/1 var(--display); }
+  .paid { margin-top: 10px; display: inline-block; padding: 4px 10px; border-radius: 99px; background: #e9f9f1; color: var(--accent-ink); font-size: 12px; font-weight: 500; }
+
+  .booking { right: 0; top: 0; width: 250px; transform: rotate(2deg); }
+  .slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .slots span { padding: 7px 0; text-align: center; border-radius: 8px; border: 1px solid var(--line); font: 500 12px/1 'Red Hat Mono', monospace; color: var(--muted); }
+  .slots .on { background: var(--pine); border-color: var(--pine); color: #fff; }
+
+  .stock { right: 6%; top: 44%; width: 270px; transform: rotate(-1deg); z-index: 1; }
+  .bar { display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 10px; margin: 7px 0; color: #3c4046; }
+  .bar i { height: 8px; border-radius: 99px; background: linear-gradient(90deg, var(--resin) var(--v), #f1efe9 var(--v)); }
+  .bar.low i { background: linear-gradient(90deg, var(--ember) var(--v), #f1efe9 var(--v)); }
+  .warn { margin-top: 10px; font-size: 12px; color: var(--ember); }
+
+  .flow { left: 10%; bottom: 4%; display: flex; align-items: center; padding: 12px 14px; transform: rotate(1.5deg); }
+  .node { padding: 7px 12px; border-radius: 8px; background: #fafaf8; border: 1px solid var(--line); font: 500 12px/1 'Red Hat Mono', monospace; }
+  .node.ok { background: #e9f9f1; border-color: #bfeed6; color: var(--accent-ink); }
+  .wire { width: 34px; height: 2px; background: repeating-linear-gradient(90deg, var(--night) 0 4px, transparent 4px 8px); }
+
+  .chapters { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .chapters a {
+    position: relative; display: grid; gap: 4px; padding: 16px 18px; background: #fff; border: 1px solid var(--line);
+    border-radius: 12px; overflow: hidden; text-decoration: none;
+    transition: transform 240ms var(--ease-out), box-shadow 240ms var(--ease-out), border-color 240ms var(--ease-out);
+  }
+  .chapters a::before { content: ''; position: absolute; inset: 0 0 auto; height: 4px; background: var(--c); }
+  .row { display: flex; justify-content: space-between; align-items: center; }
+  .n { font: 500 12px/1 'Red Hat Mono', monospace; color: var(--muted); }
+  .arrow { color: var(--muted); transition: transform 240ms var(--ease-out), color 240ms var(--ease-out); }
+  .label { font: 700 20px/1.2 var(--display); }
+  .hint { font-size: 13px; color: var(--muted); }
   @media (hover: hover) and (pointer: fine) {
-    .swatch:hover .arrow { transform: translateY(4px); }
+    .chapters a:hover { transform: translateY(-3px); border-color: #d8d8d2; box-shadow: 0 14px 30px -16px #00000040; }
+    .chapters a:hover .arrow { color: var(--night); transform: translateY(3px); }
   }
-  .swatch:active span { transform: scale(0.97); }
+  .chapters a:active { transform: scale(0.98); }
 
   @media (max-width: 1100px) {
-    .text { grid-column: 1 / 8; }
+    .glimpse { transform: scale(0.85); transform-origin: right center; }
+  }
+  @media (max-width: 900px) {
+    .hero { height: auto; min-height: 100svh; gap: 32px; padding-top: 20px; }
+    .top { grid-template-columns: 1fr auto; }
+    .status { display: none; }
+    .stage { grid-template-columns: 1fr; }
+    .glimpse { display: none; }
+    .chapters { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .chapters a:last-child { grid-column: 1 / -1; }
+    h1 { font-size: 19vw; }
   }
   @media (max-width: 760px) {
-    .hero { grid-template-columns: 1fr; height: auto; min-height: 0; padding: 8px; }
-    .panel { height: 64svh; min-height: 460px; padding: 18px; grid-template-rows: 1fr auto; }
-    .title { margin-top: 6vh; }
-    h1 { font-size: 17vw; }
-    .subtitle { margin-top: 24px; }
-    .text { display: none; }
-    .cta { grid-column: 1 / -1; justify-self: center; }
-    .swatches { grid-template-rows: none; }
-    .swatch { min-height: 52px; align-items: center; padding: 0 16px; font-size: var(--step-small); }
+    .text { display: none; } /* the Problem section shows it on phones */
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .status i { animation: none; }
   }
 </style>

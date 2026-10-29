@@ -1,0 +1,29 @@
+/* Portfolio demo only: the simulated portal copy and the generated document shown on the page */
+.copied { cursor: pointer; }
+.copied:hover { border-color: rgba(59,130,246,.6); }
+.copied:focus-visible { outline: 3px solid rgba(59,130,246,.45); outline-offset: 2px; }
+.demo-hint { margin-top: 8px; color: #93c5fd; }
+
+#out { margin-top: 24px; }
+.doc { background: #fff; color: #111; border-radius: 6px; padding: 44px 56px 36px; font: 13px/1.6 "Times New Roman", Georgia, serif;
+  box-shadow: 0 20px 50px rgba(0,0,0,.4); }
+.doc-head { display: flex; align-items: center; justify-content: center; gap: 14px; padding-bottom: 10px; border-bottom: 2px solid #0b3d1e; }
+.doc-head img { width: 64px; height: 40px; object-fit: contain; }
+.doc-head b { display: block; font-size: 15px; letter-spacing: .04em; color: #0b3d1e; }
+.doc-head small { display: block; font-size: 11px; color: #333; }
+.doc h3 { text-align: center; font-size: 18px; margin: 22px 0 16px; text-transform: uppercase; letter-spacing: .06em; }
+.doc p { margin: 0 0 12px; text-align: justify; text-indent: 3em; }
+.doc p.addr, .doc p.end, .doc p.doc-note { text-indent: 0; }
+.doc p.end { text-align: center; font-size: 11px; margin: 4px 0 14px; }
+.doc-table, .doc-meta { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 12px; }
+.doc-table th { text-align: left; border-bottom: 1px solid #111; padding: 3px 6px; }
+.doc-table td { padding: 2px 6px; }
+.doc-table .n { text-align: right; width: 60px; }
+.doc-table tr.term td { font-weight: 700; padding-top: 8px; }
+.doc-table tr.avg td { font-style: italic; border-top: 1px solid #bbb; }
+.doc-meta td { border: 1px solid #999; padding: 3px 6px; }
+.doc-meta td:nth-child(odd) { color: #555; width: 110px; }
+.doc-sign { margin: 34px 0 0 auto; width: 240px; text-align: center; }
+.doc-sign b { display: block; border-bottom: 1px solid #111; padding-bottom: 2px; }
+.doc-foot { display: flex; justify-content: space-between; margin-top: 18px; font-size: 11px; }
+.doc-note { font-size: 11px; font-style: italic; margin-top: 8px; }

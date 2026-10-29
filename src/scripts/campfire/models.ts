@@ -86,6 +86,25 @@ const clampR = (r: number, w: number, h: number, d: number) => Math.min(r, w / 2
 function rboxC(w: number, h: number, d: number, r: number, m: THREE.Material) {
   return new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 3, clampR(r, w, h, d)), m);
 }
+/** Rounded rectangle outline, centred on its origin, for corners rounder than a thin rounded box allows. */
+export function roundRect(w: number, h: number, r: number) {
+  const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y);
+  s.lineTo(x + w - r, y);
+  s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + h - r);
+  s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.lineTo(x + r, y + h);
+  s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + r);
+  s.quadraticCurveTo(x, y, x + r, y);
+  return s;
+}
+/** Thin slab (in its x-y plane, d deep) centred on its origin, with corners of radius r whatever its depth. */
+function slabC(w: number, h: number, d: number, r: number, m: THREE.Material) {
+  const geo = new THREE.ExtrudeGeometry(roundRect(w, h, r), { depth: d, bevelEnabled: false, curveSegments: 8 });
+  return new THREE.Mesh(geo.center(), m);
+}
 /** Rounded box resting on y = 0. */
 function rbox(w: number, h: number, d: number, r: number, m: THREE.Material) {
   const mesh = rboxC(w, h, d, r, m);
@@ -264,13 +283,15 @@ export function kiosk() {
   cam.rotation.x = Math.PI / 2;
   front(cam, 0, H - 0.085);
   front(rboxC(W - 0.05, 0.74, 0.008, 0.022, M.bezel), 0, H - 0.49, 0.002); // screen bezel
-  front(rboxC(W - 0.085, 0.69, 0.004, 0.012, M.glass), 0, H - 0.49, 0.006); // screen glass (blank)
+  const glass = rboxC(W - 0.085, 0.69, 0.004, 0.012, M.glass);
+  glass.name = 'kioskScreen'; // the scene pins the kiosk's welcome screen (/kiosk) onto this (it faces +z)
+  front(glass, 0, H - 0.49, 0.006);
 
   // Payment module: tap pad, QR window, status lights
   front(rboxC(W - 0.1, 0.2, 0.01, 0.02, M.plastic), 0, 0.5, 0.002);
   front(rboxC(0.13, 0.1, 0.006, 0.016, M.aluDark), -0.085, 0.49, 0.008);
   front(rboxC(0.12, 0.1, 0.006, 0.012, M.qr), 0.09, 0.49, 0.008);
-  for (let i = 0; i < 4; i++) front(rboxC(0.014, 0.004, 0.002, 0.001, M.led), -0.12 + i * 0.022, 0.575, 0.008);
+  for (let i = 0; i < 4; i++) front(rboxC(0.014, 0.004, 0.002, 0.001, M.led), -0.12 + i * 0.022, 0.415, 0.008); // below the pads, clear of the screen
 
   // Ticket slot with a metal trim, speaker grille, wordmark
   front(rboxC(W - 0.16, 0.034, 0.006, 0.008, M.alu), 0, 0.32, 0.001);
@@ -325,7 +346,9 @@ function tablet() {
   const foot = new THREE.Vector3(0, 0.005, 0.04); // where the tablet's bottom edge rests, against the lip
   const slab = group('slab', rboxC(W, H, 0.007, 0.01, M.plastic));
   slab.add(at(rboxC(W - 0.006, H - 0.006, 0.002, 0.008, M.bezel), 0, 0, 0.0032));
-  slab.add(at(rboxC(W - 0.012, H - 0.012, 0.002, 0.006, M.glass), 0, 0, 0.0045));
+  const screen = at(rboxC(W - 0.012, H - 0.012, 0.002, 0.006, M.glass), 0, 0, 0.0045);
+  screen.name = 'tabletScreen'; // the scene pins the tablet's desktop (/tablet) onto this (it faces +z)
+  slab.add(screen);
   slab.position.copy(foot).addScaledVector(up, H / 2).addScaledVector(back, 0.0035);
   slab.rotation.x = -lean;
   g.add(slab);
@@ -345,8 +368,11 @@ function phone() {
   const g = group('phone');
   g.add(rbox(0.075, 0.01, 0.075, 0.005, M.alu));
   g.add(at(rbox(0.075, 0.012, 0.008, 0.003, M.alu), 0, 0.01, 0.025)); // front lip
-  const set = group('handset', rboxC(0.072, 0.15, 0.008, 0.009, M.plastic));
-  set.add(at(rboxC(0.068, 0.146, 0.002, 0.008, M.glass), 0, 0, 0.0045));
+  const set = group('handset', slabC(0.072, 0.15, 0.008, 0.011, M.plastic));
+  set.add(at(slabC(0.07, 0.148, 0.002, 0.01, M.bezel), 0, 0, 0.0032)); // black border round the screen
+  const screen = at(slabC(0.064, 0.138, 0.002, 0.007, M.glass), 0, 0, 0.0045);
+  screen.name = 'phoneScreen'; // the scene pins the phone's home screen (/phone) onto this (it faces +z; its 7 mm corners match PHONE_R in scene.ts)
+  set.add(screen);
   set.add(at(rboxC(0.024, 0.032, 0.004, 0.006, M.aluDark), -0.017, 0.05, -0.005)); // camera bump
   set.add(at(rboxC(0.05, 0.09, 0.006, 0.003, M.alu), 0, -0.02, -0.009)); // stand back plate
   set.position.set(0, 0.088, 0.012);

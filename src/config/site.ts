@@ -13,13 +13,13 @@ export const brand = {
   email: 'hello@example.com', // TODO: your real email. While it's example.com, the buttons only show a message.
 };
 
-// The five colour blocks beside the hero photo. Each block is the colour of the chapter it opens.
+// The five chapter cards along the bottom of the hero. Each card carries the colour of the chapter it opens.
 export const nav = [
-  { href: '#problem', label: 'Problem', field: 'night' },
-  { href: '#products', label: 'Products', field: 'pine' },
-  { href: '#market', label: 'Market', field: 'resin' },
-  { href: '#model', label: 'Pricing', field: 'fog' },
-  { href: '#roadmap', label: 'Roadmap', field: 'ember' },
+  { href: '#problem', label: 'Problem', hint: 'Notebooks, slips and memory', field: 'night' },
+  { href: '#how', label: 'Products', hint: 'From paper to system', field: 'pine' },
+  { href: '#market', label: 'Market', hint: 'Starting in Benguet', field: 'resin' },
+  { href: '#model', label: 'Pricing', hint: 'Plain monthly plans', field: 'fog' },
+  { href: '#roadmap', label: 'Roadmap', hint: 'Where the fire goes next', field: 'ember' },
 ];
 
 export const hero = {
