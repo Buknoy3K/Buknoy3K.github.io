@@ -20,39 +20,21 @@ const glow = (color: string, opacity: number) =>
 const M = {
   shell: phys('#efefeb', { roughness: 0.3, clearcoat: 0.5, clearcoatRoughness: 0.25 }),
   shellBack: std('#c9cac6', { roughness: 0.45 }),
-  glass: phys('#06080a', { roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.04 }),
+  glass: phys('#06080a', { roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 0.35 }),
   bezel: std('#101113', { roughness: 0.35 }),
   plastic: std('#1d1f22', { roughness: 0.5 }),
   qr: phys('#0d2a22', { roughness: 0.05, clearcoat: 1 }),
-  printer: std('#121315', { roughness: 0.68 }),
-  printerLid: std('#1b1c1f', { roughness: 0.35 }),
   alu: std('#c3c7cc', { roughness: 0.3, metalness: 0.85 }),
   aluDark: std('#5d6168', { roughness: 0.35, metalness: 0.8 }),
   key: std('#18191c', { roughness: 0.6 }),
   green: std('#3ecf8e', { roughness: 0.4 }),
   led: new THREE.MeshBasicMaterial({ color: '#4dffa6' }),
-  // Weathered, reclaimed-looking boards for the outdoor desk
-  plank: std('#ffffff', { map: T.wood('#9a7650', '#5a3f27'), roughness: 0.82 }),
-  boardsV: [T.woodV('#8a6a48', '#523a24'), T.woodV('#957351', '#5c4129'), T.woodV('#7f6143', '#4a3421')].map((map) => std('#ffffff', { map, roughness: 0.85 })),
-  boardsH: [T.wood('#8a6a48', '#523a24'), T.wood('#957351', '#5c4129')].map((map) => std('#ffffff', { map, roughness: 0.85 })),
   seam: std('#2a1c12', { roughness: 1 }),
-  iron: std('#26221f', { roughness: 0.55, metalness: 0.7, side: THREE.DoubleSide }),
-  walnut: std('#ffffff', { map: T.wood('#6b4630', '#3d2617'), roughness: 0.45 }),
-  deskInner: std('#2e2117', { roughness: 0.95 }),
-  pineBark: std('#a39486', { map: T.bark(), roughness: 0.95 }),
-  needle: std('#ffffff', { roughness: 0.7 }),
-  padCore: std('#22371a', { roughness: 0.95 }),
-  candle: std('#a7b97a', { roughness: 0.7 }),
-  moss: std('#3a5122', { roughness: 1 }),
-  mossLight: std('#55702e', { roughness: 1 }),
-  bonsaiPot: std('#5e4636', { roughness: 0.82 }),
-  slabTop: std('#ffffff', { map: T.rings(), roughness: 0.7 }),
-  bark: std('#ffffff', { map: T.bark(), roughness: 0.95, side: THREE.DoubleSide }),
-  logBark: std('#8f8f8f', { map: T.bark(), roughness: 0.95 }),
-  logEnd: std('#ffffff', { map: T.endGrain(), roughness: 0.9 }),
-  dirt: std('#ffffff', { map: T.dirt(), roughness: 1 }),
-  ash: std('#3b3836', { roughness: 1 }),
-  stones: ['#7b776f', '#8b867d', '#67635c', '#958f84'].map((c) => std(c, { roughness: 0.9 })),
+  // Pale birch desk on white metal legs
+  birch: std('#ffffff', { map: T.wood('#e2cfae', '#c4a67c'), roughness: 0.55 }),
+  legs: std('#e6e6e3', { roughness: 0.35, metalness: 0.25 }),
+  printer: std('#121315', { roughness: 0.68 }),
+  printerLid: std('#1b1c1f', { roughness: 0.35 }),
   paper: std('#ffffff', { map: T.receipt(), side: THREE.DoubleSide, roughness: 0.85 }),
   pages: std('#eee7d8', { roughness: 0.95 }),
   diary: std('#262321', { roughness: 0.75 }),
@@ -65,7 +47,22 @@ const M = {
   pebble: std('#a39c90', { roughness: 0.8 }),
   jade: phys('#46783a', { roughness: 0.35, clearcoat: 0.45, clearcoatRoughness: 0.3 }),
   jadeYoung: phys('#7aa653', { roughness: 0.4, clearcoat: 0.3 }),
-  can: std('#79a79d', { roughness: 0.38, metalness: 0.4, side: THREE.DoubleSide }),
+  can: std('#7b9dc4', { roughness: 0.38, metalness: 0.35, side: THREE.DoubleSide }),
+  lampShade: std('#e8662c', { roughness: 0.45, side: THREE.DoubleSide }),
+  lampGlow: new THREE.MeshBasicMaterial({ color: '#ffd9a8' }),
+  notes: ['#f3e27c', '#f4b0c8', '#a5cdf2', '#b3e3a6'].map((c) => std(c, { roughness: 0.9, side: THREE.DoubleSide })),
+  walnut: std('#ffffff', { map: T.wood('#6b4630', '#3d2617'), roughness: 0.45 }),
+  pineBark: std('#a39486', { map: T.bark(), roughness: 0.95 }),
+  needle: std('#ffffff', { roughness: 0.7 }),
+  padCore: std('#22371a', { roughness: 0.95 }),
+  candle: std('#a7b97a', { roughness: 0.7 }),
+  moss: std('#3a5122', { roughness: 1 }),
+  mossLight: std('#55702e', { roughness: 1 }),
+  logBark: std('#8f8f8f', { map: T.bark(), roughness: 0.95 }),
+  logEnd: std('#ffffff', { map: T.endGrain(), roughness: 0.9 }),
+  ash: std('#3b3836', { roughness: 1 }),
+  gravel: std('#ffffff', { roughness: 0.9 }),
+  stones: ['#5d5a55', '#6b675f', '#4f4c48', '#76716a'].map((c) => std(c, { roughness: 0.9 })),
   cardFace: std('#ffffff', { map: T.cardFace(), roughness: 0.35 }),
   cardBack: std('#17191c', { roughness: 0.4 }),
   ember: std('#2a1208', { emissive: '#ff5a10', emissiveIntensity: 1.6, roughness: 1 }),
@@ -132,7 +129,7 @@ function decal(w: number, h: number, m: THREE.Material) {
   return new THREE.Mesh(new THREE.PlaneGeometry(w, h), m);
 }
 
-// ---------------------------------------------------------------- bonfire
+// ---------------------------------------------------------------- fire
 
 const flameGeo = new THREE.LatheGeometry(
   Array.from({ length: 17 }, (_, i) => {
@@ -142,55 +139,11 @@ const flameGeo = new THREE.LatheGeometry(
   20,
 );
 
-export function bonfire() {
-  const g = group('bonfire');
+/** The campfire itself: a low tepee of logs on glowing coals over an ash bed, with flames, sparks and smoke. */
+function fire() {
+  const g = group('fire');
   T.reseed(11);
-
-  // Ground patch with a ragged edge
-  const patchGeo = new THREE.CircleGeometry(0.85, 64);
-  const pp = patchGeo.attributes.position;
-  for (let i = 1; i < pp.count; i++) {
-    const a = Math.atan2(pp.getY(i), pp.getX(i));
-    const k = 1 + Math.sin(a * 5 + 1) * 0.05 + Math.sin(a * 13) * 0.025;
-    pp.setXY(i, pp.getX(i) * k, pp.getY(i) * k);
-  }
-  const patch = new THREE.Mesh(patchGeo, M.dirt);
-  patch.rotation.x = -Math.PI / 2;
-  patch.position.y = 0.004;
-  g.add(patch);
-  g.add(at(cyl(0.28, 0.34, 0.025, M.ash, 32), 0, 0, 0));
-
-  // Stone ring: all about the same size, but each a clearly different shape (rounded boulder, faceted chunk,
-  // flat slab, long wedge...), in mixed greys. Each shape's proportions keep roughly the same volume.
-  const n = 14;
-  const kinds: { geo: (r: number) => THREE.BufferGeometry; s: [number, number, number]; lump: number; f: number }[] = [
-    { geo: (r) => new THREE.IcosahedronGeometry(r, 2), s: [1.15, 0.8, 1.05], lump: 0.1, f: 2.2 }, // smooth river boulder
-    { geo: (r) => new THREE.DodecahedronGeometry(r, 0), s: [1.1, 0.85, 1.05], lump: 0.12, f: 3 }, // faceted chunk
-    { geo: (r) => new THREE.IcosahedronGeometry(r, 1), s: [1.45, 0.55, 1.2], lump: 0.08, f: 2.5 }, // flat slab
-    { geo: (r) => new THREE.OctahedronGeometry(r, 1), s: [1.5, 0.75, 0.85], lump: 0.12, f: 2 }, // long wedge
-    { geo: (r) => new THREE.IcosahedronGeometry(r, 1), s: [1, 0.95, 1], lump: 0.22, f: 1.6 }, // round lump with a dent
-    { geo: (r) => new THREE.IcosahedronGeometry(r, 2), s: [1.2, 0.95, 0.85], lump: 0.2, f: 4.2 }, // knobbly egg
-  ];
-  for (let i = 0; i < n; i++) {
-    const kind = kinds[(i * 5) % kinds.length];
-    const r = 0.085 + (T.rand() - 0.5) * 0.01;
-    const geo = kind.geo(r);
-    // Lumps come from the vertex's direction, so the copies of a shared corner move together (no cracks).
-    const sp = geo.attributes.position;
-    const ph = T.rand() * 10;
-    for (let k = 0; k < sp.count; k++) {
-      const x = sp.getX(k) / r, y = sp.getY(k) / r, z = sp.getZ(k) / r;
-      const s = 1 + Math.sin(x * kind.f + ph) * Math.cos(z * kind.f * 0.9 + ph) * kind.lump + Math.sin(y * kind.f * 1.4 + ph * 2) * kind.lump * 0.45;
-      sp.setXYZ(k, sp.getX(k) * s, sp.getY(k) * s, sp.getZ(k) * s);
-    }
-    geo.computeVertexNormals();
-    const stone = new THREE.Mesh(geo, M.stones[i % M.stones.length]);
-    const a = (i / n) * Math.PI * 2 + T.rand() * 0.1;
-    stone.position.set(Math.cos(a) * 0.58, r * kind.s[1] * 0.7, Math.sin(a) * 0.54);
-    stone.rotation.set((T.rand() - 0.5) * 0.4, T.rand() * 6, (T.rand() - 0.5) * 0.4); // lying flat, any heading
-    stone.scale.set(...kind.s);
-    g.add(stone);
-  }
+  g.add(at(cyl(0.28, 0.32, 0.012, M.ash, 32), 0, 0, 0));
 
   // Logs leaning into a low, wide tepee, with cut ends
   for (let i = 0; i < 7; i++) {
@@ -320,7 +273,7 @@ export function kiosk() {
   return g;
 }
 
-// ---------------------------------------------------------------- table + devices
+// ---------------------------------------------------------------- desk + things on it
 
 function laptop() {
   const g = group('laptop');
@@ -341,7 +294,16 @@ function laptop() {
   // Lid hinged at the back edge, opened ~105 degrees; screen layers sit on its underside
   const lid = group('lid', at(rbox(W, 0.006, D, 0.005, M.alu), 0, 0, D / 2));
   lid.add(at(rboxC(W - 0.006, 0.002, D - 0.006, 0.004, M.bezel), 0, -0.001, D / 2));
-  lid.add(at(rboxC(W - 0.01, 0.002, D - 0.016, 0.003, M.glass), 0, -0.0022, D / 2 + 0.002));
+  const screen = at(rboxC(W - 0.01, 0.002, D - 0.016, 0.003, M.glass), 0, -0.0022, D / 2 + 0.002);
+  screen.name = 'laptopScreen'; // the scene pins the live website onto this (it faces the lid's -y)
+  lid.add(screen);
+  // Sticky notes stuck to the lid's edges, half hanging off
+  for (const [x, z, rot, m] of [[-1, 0.78, 0.12, M.notes[0]], [-1, 0.5, -0.1, M.notes[1]], [1, 0.84, -0.08, M.notes[2]], [1, 0.58, 0.14, M.notes[3]]] as const) {
+    const note = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.05).rotateX(Math.PI / 2), m);
+    note.position.set(x * (W / 2 + 0.014), -0.0034, D * z);
+    note.rotation.y = rot;
+    lid.add(note);
+  }
   lid.position.set(0, 0.013, -D / 2);
   lid.rotation.x = -1.85;
   g.add(lid);
@@ -403,94 +365,6 @@ function cardStand() {
   g.add(card);
   return g;
 }
-
-/** Upright panel of n boards side by side along x, facing +z, with hairline gaps between them. */
-function boards(w: number, h: number, t: number, n: number) {
-  const g = group('boards');
-  const bw = w / n;
-  for (let i = 0; i < n; i++) g.add(at(rbox(bw - 0.003, h, t, 0.006, M.boardsV[i % M.boardsV.length]), -w / 2 + bw * (i + 0.5), 0, 0));
-  return g;
-}
-
-/** Board drawer front with a black iron cup pull, facing +z. */
-function drawer(w: number, h: number, i: number) {
-  const g = group('drawer', rboxC(w, h, 0.015, 0.006, M.boardsH[i % M.boardsH.length]));
-  const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.075, 16, 1, true, 0, Math.PI), M.iron);
-  cup.rotation.z = Math.PI / 2;
-  cup.position.set(0, h / 2 - 0.045, 0.0075);
-  g.add(cup);
-  g.add(at(rboxC(0.09, 0.026, 0.003, 0.004, M.iron), 0, h / 2 - 0.04, 0.009)); // backplate
-  return g;
-}
-
-/** Scale an object up uniformly (the desk things are drawn at real size, then enlarged to read from the camera). */
-const big = <O extends THREE.Object3D>(o: O, s: number) => (o.scale.setScalar(s), o);
-
-/** Rustic outdoor-lab desk: a plank top with softly rounded corners (no sharp corners pointing at anyone, per feng shui),
- *  board sides and back, and one stack of drawers on the left; the right side is open for your knees.
- *  On top, evenly spaced left to right and alternating back and front: laptop, business card, tablet, phone. */
-export function desk() {
-  const g = group('desk');
-  const top = 0.55, LW = 0.9, LD = 0.64, TT = 0.028, PT = 0.015, toe = 0.05; // thin boards, so it reads light, not bulky
-  const body = top - TT, CW = LW - 0.05, CD = LD - 0.07, zB = -0.015, zF = zB + CD / 2; // carcass sits inside the top's overhang
-
-  // Top: one slab with rounded corners and eased edges, scored into four planks
-  const r = 0.07, w2 = LW / 2, d2 = LD / 2;
-  const shape = new THREE.Shape();
-  shape.moveTo(-w2 + r, -d2);
-  shape.lineTo(w2 - r, -d2);
-  shape.quadraticCurveTo(w2, -d2, w2, -d2 + r);
-  shape.lineTo(w2, d2 - r);
-  shape.quadraticCurveTo(w2, d2, w2 - r, d2);
-  shape.lineTo(-w2 + r, d2);
-  shape.quadraticCurveTo(-w2, d2, -w2, d2 - r);
-  shape.lineTo(-w2, -d2 + r);
-  shape.quadraticCurveTo(-w2, -d2, -w2 + r, -d2);
-  const bev = 0.005;
-  const topGeo = new THREE.ExtrudeGeometry(shape, { depth: TT - 2 * bev, bevelEnabled: true, bevelThickness: bev, bevelSize: bev, bevelSegments: 3, curveSegments: 10 });
-  topGeo.rotateX(-Math.PI / 2);
-  const slab = new THREE.Mesh(topGeo, M.plank);
-  slab.position.y = body + bev;
-  g.add(slab);
-  for (const z of [-LD / 4, 0, LD / 4]) g.add(at(rboxC(LW - 0.004, 0.002, 0.004, 0.001, M.seam), 0, top + 0.0005, z));
-
-  // Board sides and back
-  for (const s of [-1, 1]) {
-    const side = at(boards(CD, body, PT, 4), s * (CW / 2 - PT / 2), 0, zB);
-    side.rotation.y = Math.PI / 2;
-    g.add(side);
-  }
-  g.add(at(boards(CW - 2 * PT, body, PT * 0.7, 6), 0, 0, zB - CD / 2 + PT * 0.35));
-
-  // Left drawer stack: divider, three drawers, a recessed kick board
-  const PW = 0.3, open = PW - 1.5 * PT, H = body - toe, gap = 0.007, dh = (H - 4 * gap) / 3;
-  const divider = at(boards(CD, body, PT, 4), -(CW / 2 - PW), 0, zB);
-  divider.rotation.y = Math.PI / 2;
-  g.add(divider);
-  const cx = -(CW / 2 - PW / 2 - PT / 4);
-  g.add(at(rbox(open, H, CD - 0.03, 0.002, M.deskInner), cx, toe, zB - 0.01)); // drawer boxes, seen through the gaps
-  g.add(at(rbox(open, toe, 0.015, 0.002, M.deskInner), cx, 0, zF - 0.03));
-  for (let i = 0; i < 3; i++) g.add(at(drawer(open - gap, dh, i), cx, toe + gap + dh / 2 + i * (dh + gap), zF + 0.003));
-  // Front rail under the top over the open side, and a low stretcher between the sides at the back
-  const kx0 = -(CW / 2 - PW) + PT / 2, kx1 = CW / 2 - PT, KW = kx1 - kx0;
-  g.add(at(rbox(KW, 0.06, 0.015, 0.005, M.boardsH[1]), (kx0 + kx1) / 2, body - 0.06, zF - 0.008));
-  g.add(at(rbox(KW, 0.05, 0.015, 0.005, M.boardsH[0]), (kx0 + kx1) / 2, 0.06, zB - CD / 2 + 0.05));
-
-  const S = 1.25;
-  g.add(at(big(laptop(), S), -0.225, top, -0.1));
-  const c = at(big(cardStand(), 1.6), -0.02, top, 0.2);
-  c.rotation.y = 0.08;
-  g.add(c);
-  const t = at(big(tablet(), S), 0.19, top, -0.12);
-  t.rotation.y = -0.15;
-  g.add(t);
-  const p = at(big(phone(), S), 0.37, top, 0.17);
-  p.rotation.y = -0.25;
-  g.add(p);
-  return g;
-}
-
-// ---------------------------------------------------------------- log table + desk things
 
 /** Receipt printer: a plain black box with a clamshell lid seam on top, a front panel with the feed button and
  *  status light, and a receipt coming out of the slot at the front of the lid. */
@@ -575,84 +449,6 @@ function mug() {
   return g;
 }
 
-/** Log table: a thick sawn slab resting on a short trunk, both a little out of round, with furrowed bark, a couple of
- *  knots, and buttress roots: ridges of the trunk itself that spread out and slope down to meet the ground. Holds the printer, diary and mug in a row. */
-export function stump() {
-  const g = group('stump');
-  T.reseed(31);
-  const h = 0.48, slabT = 0.08, R = 0.34, sb = h - slabT, radial = 96;
-  const roots = Array.from({ length: 5 }, (_, i) => [(i / 5) * Math.PI * 2 + 0.4 + (T.rand() - 0.5) * 0.5, 0.09 + T.rand() * 0.06]);
-  const angGap = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
-  const wobble = (a: number, k: number) => 1 + Math.sin(a * 3 + k) * 0.03 + Math.sin(a * 5 + 2 * k) * 0.018 + Math.sin(a * 11 + k) * 0.008;
-  const furrow = (a: number, y: number) => Math.pow(0.5 + 0.5 * Math.sin(a * 26 + Math.sin(y * 9 + a * 2) * 1.3), 3) * 0.006;
-  /** Bark wall between two heights, its radius given for each angle and height. */
-  const wall = (y0: number, y1: number, rows: number, radius: (a: number, y: number) => number) => {
-    const geo = new THREE.CylinderGeometry(1, 1, y1 - y0, radial, rows, true).translate(0, (y0 + y1) / 2, 0);
-    const p = geo.attributes.position, uv = geo.attributes.uv;
-    for (let k = 0; k < p.count; k++) {
-      const a = Math.atan2(p.getZ(k), p.getX(k)), y = p.getY(k), r = radius(a, y);
-      p.setXYZ(k, Math.cos(a) * r, y, Math.sin(a) * r);
-      uv.setY(k, y * 2); // same bark scale on the slab and the trunk, however tall each wall is
-    }
-    geo.computeVertexNormals();
-    return new THREE.Mesh(geo, M.bark);
-  };
-  /** Flat sawn face at height y, cut to an outline, facing up or down. */
-  const face = (y: number, radius: (a: number) => number, m: THREE.Material, up: boolean) => {
-    const geo = new THREE.CircleGeometry(1, radial);
-    const p = geo.attributes.position, uv = geo.attributes.uv;
-    for (let k = 1; k < p.count; k++) {
-      // Turning the disc face-up maps its angle a to -a in the world (face-down keeps it), so look the outline up there
-      const a = Math.atan2(p.getY(k), p.getX(k)), r = radius(up ? -a : a);
-      p.setXY(k, Math.cos(a) * r, Math.sin(a) * r);
-      uv.setXY(k, 0.5 + Math.cos(a) * 0.495, 0.5 + Math.sin(a) * 0.495);
-    }
-    geo.rotateX(up ? -Math.PI / 2 : Math.PI / 2);
-    return at(new THREE.Mesh(geo, m), 0, y, 0);
-  };
-
-  // Slab: its bark edge narrows a little toward the bottom, like the old round
-  const slabR = (a: number) => R * wobble(a, 0);
-  g.add(wall(sb, h, 6, (a, y) => slabR(a) * (1 - 0.035 * (1 - (y - sb) / slabT)) - furrow(a, y)));
-  g.add(face(h, (a) => slabR(a) - 0.0015, M.slabTop, true));
-  g.add(face(sb, (a) => slabR(a) * 0.965 - 0.003, M.bark, false));
-
-  // Trunk: waisted in the middle, widening at the foot. Each root is a ridge of the trunk that starts ~20 cm up and
-  // reaches further out, and spreads wider, the lower it gets, so its top slopes smoothly down to the ground.
-  const trunkR = (a: number, y: number) => {
-    const u = Math.max(0, 1 - y / 0.2);
-    const reach = roots.reduce((s, [ra, L]) => s + L * u * u * Math.exp(-(angGap(a, ra) ** 2) / (0.015 + 0.05 * u)), 0);
-    const base = 0.15 + 0.06 * Math.exp(-y / 0.07) + 0.012 * Math.max(0, (y - 0.3) / (sb - 0.3));
-    return base * wobble(a, 1.7) + reach - furrow(a, y);
-  };
-  g.add(wall(0, sb + 0.01, 48, trunkR));
-  // Knots: old branch stubs, half sunk into the bark
-  for (const [a, y, kr] of [[-0.9, 0.27, 0.024], [2.3, 0.23, 0.02]]) {
-    const rr = trunkR(a, y) - 0.004;
-    const knot = new THREE.Mesh(new THREE.SphereGeometry(kr, 16, 10), M.logBark);
-    knot.position.set(Math.cos(a) * rr, y, Math.sin(a) * rr);
-    knot.scale.set(1, 1.35, 1);
-    g.add(knot);
-    const scar = new THREE.Mesh(new THREE.CircleGeometry(kr * 0.55, 16), M.logEnd);
-    scar.position.set(Math.cos(a) * (rr + kr * 0.98), y, Math.sin(a) * (rr + kr * 0.98));
-    scar.lookAt(Math.cos(a) * 2, y, Math.sin(a) * 2);
-    g.add(scar);
-  }
-  const S = 1.2;
-  const pr = at(big(printer(), S), -0.2, h, -0.02);
-  pr.rotation.y = 0.08;
-  g.add(pr);
-  const d = at(big(diary(), S), 0.025, h, 0);
-  d.rotation.y = -0.06;
-  g.add(d);
-  const m = at(big(mug(), S), 0.215, h, -0.01);
-  m.rotation.y = -0.8; // handle toward the camera, away from the diary
-  g.add(m);
-  return g;
-}
-
-// ---------------------------------------------------------------- plants
-
 function pot(rTop: number, rBot: number, h: number, m: THREE.Material) {
   const lip = 0.012;
   const g = group('pot', lathe([[0, 0.002], [rBot - 0.006, 0], [rBot, 0.006], [rTop - 0.004, h - 0.03], [rTop + lip, h - 0.028], [rTop + lip, h], [rTop - 0.006, h], [rTop - 0.01, h - 0.03], [0, h - 0.03]], m, 48));
@@ -679,9 +475,9 @@ function wateringCan() {
 const jadeLeafGeo = new THREE.SphereGeometry(1, 16, 10);
 
 /** Jade plant ("money plant" in feng shui): a rounded mound of plump, glossy, coin-shaped leaves in crossing pairs,
- *  sitting straight on a white pot (no stem showing), with a watering can. */
-export function smallPlant() {
-  const g = group('smallPlant');
+ *  sitting straight on a white pot (no stem showing). */
+function jadePlant() {
+  const g = group('jadePlant');
   T.reseed(23);
   const h = 0.15;
   const plant = group('plant', pot(0.1, 0.075, h, M.whitePot));
@@ -723,11 +519,92 @@ export function smallPlant() {
   });
   plant.add(leaves);
   g.add(plant);
-  const can = at(big(wateringCan(), 0.72), 0.19, 0, 0.06);
-  can.rotation.y = 2.5;
-  g.add(can);
   return g;
 }
+
+/** Mushroom desk lamp: a round foot, a thin stem and a domed shade with a warm glow underneath. */
+function lamp() {
+  const g = group('lamp');
+  g.add(lathe([[0, 0], [0.058, 0], [0.062, 0.006], [0.05, 0.014], [0, 0.016]], M.lampShade));
+  g.add(at(cyl(0.006, 0.007, 0.2, M.lampShade, 16), 0, 0.014, 0));
+  g.add(at(lathe([[0, 0.075], [0.03, 0.072], [0.06, 0.055], [0.08, 0.025], [0.088, 0], [0.084, -0.002], [0, -0.002]], M.lampShade, 48), 0, 0.2, 0));
+  g.add(at(new THREE.Mesh(new THREE.CircleGeometry(0.07, 32).rotateX(Math.PI / 2), M.lampGlow), 0, 0.199, 0));
+  const light = new THREE.PointLight('#ffb36b', 0.6, 1.2, 1.5);
+  light.position.y = 0.18;
+  g.add(light);
+  return g;
+}
+
+/** Loose sheet of paper with a few handwritten lines. */
+function paper() {
+  const sheet = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.2).rotateX(-Math.PI / 2), M.paper);
+  sheet.position.y = 0.001;
+  return group('paper', sheet);
+}
+
+const big = <O extends THREE.Object3D>(o: O, s: number) => (o.scale.setScalar(s), o);
+
+/** The desk: a wide pale birch top with softly rounded corners on four slim white metal legs. On top, two tidy rows
+ *  on the same five evenly spaced columns, centred on the laptop. Back: printer, tablet, laptop (with sticky notes on
+ *  its screen), phone, jade plant with its watering can. Front: a sheet of paper, the business card, the notebook,
+ *  the mug and the lamp. */
+export function desk() {
+  const g = group('desk');
+  const top = 0.75, W = 1.6, D = 0.8, TT = 0.035;
+
+  // Top: one slab with rounded corners and eased edges
+  const r = 0.04, w2 = W / 2, d2 = D / 2;
+  const shape = new THREE.Shape();
+  shape.moveTo(-w2 + r, -d2);
+  shape.lineTo(w2 - r, -d2);
+  shape.quadraticCurveTo(w2, -d2, w2, -d2 + r);
+  shape.lineTo(w2, d2 - r);
+  shape.quadraticCurveTo(w2, d2, w2 - r, d2);
+  shape.lineTo(-w2 + r, d2);
+  shape.quadraticCurveTo(-w2, d2, -w2, d2 - r);
+  shape.lineTo(-w2, -d2 + r);
+  shape.quadraticCurveTo(-w2, -d2, -w2 + r, -d2);
+  const bev = 0.008;
+  const topGeo = new THREE.ExtrudeGeometry(shape, { depth: TT - 2 * bev, bevelEnabled: true, bevelThickness: bev, bevelSize: bev, bevelSegments: 4, curveSegments: 10 });
+  topGeo.rotateX(-Math.PI / 2);
+  // Extrude maps the shape's own coordinates to uv, so scale them to show the grain at a sensible size
+  const uv = topGeo.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) / 1.2 + 0.5, uv.getY(i) / 1.2 + 0.5);
+  const slab = new THREE.Mesh(topGeo, M.birch);
+  slab.position.y = top - TT + bev;
+  g.add(slab);
+  // Legs: slim square tubes set in from the corners, with a rail under the top joining them
+  const legH = top - TT, inX = w2 - 0.09, inZ = d2 - 0.08;
+  for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) g.add(at(rbox(0.04, legH, 0.04, 0.006, M.legs), x * inX, 0, z * inZ));
+  for (const s of [-1, 1]) {
+    g.add(at(rbox(inX * 2, 0.05, 0.02, 0.004, M.legs), 0, legH - 0.05, s * inZ));
+    g.add(at(rbox(0.02, 0.05, inZ * 2, 0.004, M.legs), s * inX, legH - 0.05, 0));
+  }
+
+  // Things on the desk: [object, x, z, turn], in two rows on the same five columns
+  const S = 1.3, col = [-0.66, -0.37, 0, 0.37, 0.66], back = -0.17, front = 0.22;
+  const things: [THREE.Object3D, number, number, number][] = [
+    [big(printer(), S), col[0], back, 0.1],
+    [big(tablet(), S), col[1], back, 0.15],
+    [big(laptop(), S), col[2], back - 0.04, 0],
+    [big(phone(), S), col[3], back, -0.15],
+    [big(jadePlant(), 1.15), col[4] - 0.03, back - 0.02, 0],
+    [big(wateringCan(), 0.7), col[4] + 0.13, back + 0.08, 2.4],
+    [paper(), col[0], front, 0.05],
+    [big(cardStand(), 1.5), col[1], front, 0],
+    [big(diary(), S), col[2], front + 0.01, -0.08],
+    [big(mug(), S), col[3], front, -0.9],
+    [big(lamp(), 1.1), col[4], front - 0.02, 0],
+  ];
+  for (const [o, x, z, ry] of things) {
+    o.position.set(x, top, z);
+    o.rotation.y = ry;
+    g.add(o);
+  }
+  return g;
+}
+
+// ---------------------------------------------------------------- plants
 
 /** Mountain pine foliage pad centred at (x, y, z): a dark core under a dome of needle tufts (written into the shared
  *  instanced `needles` from index `from`), with pale new-growth candles on top. */
@@ -760,43 +637,12 @@ function needlePad(x: number, y: number, z: number, rx: number, ry: number, rz: 
   return g;
 }
 
-/** Mountain pine bonsai: an informal-upright trunk with layered foliage pads, in a shallow clay pot on a walnut stand. */
-export function bonsai() {
-  const g = group('bonsai');
+/** Mountain pine: an informal-upright trunk with spreading surface roots and layered, voluminous foliage pads.
+ *  Drawn about 0.75 m tall at size 1. */
+function pineTree(size: number) {
+  const tree = group('pine');
   T.reseed(29);
-  // Stand
-  const SH = 0.34, SW = 0.56, SD = 0.4;
-  g.add(at(rbox(SW, 0.035, SD, 0.008, M.walnut), 0, SH - 0.035, 0));
-  for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) g.add(at(rbox(0.04, SH - 0.035, 0.04, 0.006, M.walnut), x * (SW / 2 - 0.04), 0, z * (SD / 2 - 0.04)));
-  for (const s of [-1, 1]) {
-    g.add(at(rbox(SW - 0.1, 0.04, 0.02, 0.004, M.walnut), 0, SH - 0.075, s * (SD / 2 - 0.04)));
-    g.add(at(rbox(0.02, 0.04, SD - 0.1, 0.004, M.walnut), s * (SW / 2 - 0.04), SH - 0.075, 0));
-  }
-  // Shallow rectangular clay pot on little feet, its rim standing proud of the soil
-  const PW = 0.46, PD = 0.31, feet = 0.014, bodyH = 0.075, rimH = 0.018;
-  for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) g.add(at(rbox(0.05, feet, 0.04, 0.005, M.bonsaiPot), x * (PW / 2 - 0.05), SH, z * (PD / 2 - 0.04)));
-  const pb = SH + feet;
-  g.add(at(rbox(PW, bodyH, PD, 0.014, M.bonsaiPot), 0, pb, 0));
-  for (const s of [-1, 1]) {
-    g.add(at(rbox(PW + 0.01, rimH, 0.02, 0.005, M.bonsaiPot), 0, pb + bodyH - 0.004, s * (PD / 2 - 0.005)));
-    g.add(at(rbox(0.02, rimH, PD + 0.01, 0.005, M.bonsaiPot), s * (PW / 2 - 0.005), pb + bodyH - 0.004, 0));
-  }
-  const soilY = pb + bodyH + 0.004;
-  g.add(at(rbox(PW - 0.03, 0.004, PD - 0.03, 0.002, M.moss), 0, soilY - 0.004, 0));
-  for (let i = 0; i < 40; i++) {
-    const moss = new THREE.Mesh(new THREE.SphereGeometry(0.012 + T.rand() * 0.018, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2), i % 3 ? M.moss : M.mossLight);
-    moss.scale.y = 0.45;
-    moss.position.set((T.rand() - 0.5) * (PW - 0.07), soilY - 0.002, (T.rand() - 0.5) * (PD - 0.07));
-    g.add(moss);
-  }
-  for (let i = 0; i < 5; i++) {
-    g.add(at(new THREE.Mesh(new THREE.DodecahedronGeometry(0.01 + T.rand() * 0.008, 0), M.pebble), (T.rand() - 0.5) * 0.35, soilY, (T.rand() - 0.5) * 0.22));
-  }
-
-  // Tree, rooted in the soil: trunk, spreading surface roots, branches out to the pads
-  const tree = group('tree');
-  tree.position.y = soilY;
-  tree.scale.setScalar(1.15);
+  tree.scale.setScalar(size);
   const trunkPts: [number, number, number][] = [[-0.04, -0.01, 0], [-0.01, 0.1, 0.02], [-0.08, 0.22, 0], [-0.03, 0.34, -0.03], [0.05, 0.45, 0], [0.03, 0.56, 0.02], [0, 0.66, 0.02]];
   tree.add(taper(trunkPts, 0.05, 0.012, M.pineBark, 40, 12));
   const trunk = new THREE.CatmullRomCurve3(trunkPts.map((p) => new THREE.Vector3(...p)));
@@ -816,8 +662,9 @@ export function bonsai() {
   ];
   // Each pad is a full cloud: a deep main lobe with two smaller ones tucked under its sides, all thick with needles
   const lobes = [[0, 0, 0, 1.15, 1.7, 1.15], [-0.55, -0.35, 0.3, 0.7, 1.2, 0.7], [0.5, -0.3, -0.35, 0.7, 1.2, 0.7]];
-  const per = 420;
-  const needles = new THREE.InstancedMesh(new THREE.ConeGeometry(0.0026, 0.038, 3).translate(0, 0.019, 0), M.needle, pads.length * lobes.length * per);
+  const per = Math.round(420 * size); // the needles keep about their real size, so a bigger tree needs more of them
+  const nl = 0.05 / size;
+  const needles = new THREE.InstancedMesh(new THREE.ConeGeometry(0.0034 / size, nl, 3).translate(0, nl / 2, 0), M.needle, pads.length * lobes.length * per);
   const canopy = group('canopy', needles);
   pads.forEach(([x, y, z, rx, ry, rz, tt], i) => {
     if (tt < 1) {
@@ -835,6 +682,116 @@ export function bonsai() {
     canopy.rotation.x = Math.sin(t * 0.45 + 1) * 0.005;
   });
   tree.add(canopy);
+  return tree;
+}
+
+const shrubLeafGeo = new THREE.SphereGeometry(1, 6, 4).scale(0.014, 0.004, 0.009);
+
+/** Round evergreen shrub, like a clipped boxwood: a dark core thick with small leaves. Resting on y = 0. */
+function shrub(r: number) {
+  const g = group('shrub');
+  const cy = r * 0.72;
+  const core = new THREE.Mesh(new THREE.SphereGeometry(r * 0.92, 18, 12), M.padCore);
+  core.scale.y = 0.8;
+  core.position.y = cy;
+  g.add(core);
+  const n = Math.round((1500 * r * r) / 0.0225);
+  const leaves = new THREE.InstancedMesh(shrubLeafGeo, M.needle, n);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(), d = new THREE.Vector3(), c = new THREE.Color();
+  const up = new THREE.Vector3(0, 1, 0), twist = new THREE.Quaternion();
+  for (let i = 0; i < n; i++) {
+    const a = T.rand() * Math.PI * 2, ny = -0.45 + T.rand() * 1.45, rr = Math.sqrt(Math.max(0, 1 - Math.min(1, ny) ** 2));
+    d.set(Math.cos(a) * rr, Math.min(1, ny), Math.sin(a) * rr);
+    const k = 0.94 + T.rand() * 0.1;
+    p.set(d.x * r * k, cy + d.y * r * 0.8 * k, d.z * r * k);
+    q.setFromUnitVectors(up, d.normalize()).multiply(twist.setFromAxisAngle(up, T.rand() * 6.28));
+    s.setScalar(0.85 + T.rand() * 0.4);
+    leaves.setMatrixAt(i, m4.compose(p, q, s));
+    leaves.setColorAt(i, c.setHSL(0.25 + T.rand() * 0.06, 0.4 + T.rand() * 0.15, 0.17 + T.rand() * 0.13));
+  }
+  g.add(leaves);
+  return g;
+}
+
+// Rock shapes: a smooth river boulder, a faceted chunk, a flat slab, a long wedge, a round lump with a dent and a
+// knobbly egg. Each shape's proportions keep roughly the same volume, so rocks of one size look alike in bulk.
+const ROCKS: { geo: (r: number) => THREE.BufferGeometry; s: [number, number, number]; lump: number; f: number }[] = [
+  { geo: (r) => new THREE.IcosahedronGeometry(r, 2), s: [1.15, 0.8, 1.05], lump: 0.1, f: 2.2 },
+  { geo: (r) => new THREE.DodecahedronGeometry(r, 0), s: [1.1, 0.85, 1.05], lump: 0.12, f: 3 },
+  { geo: (r) => new THREE.IcosahedronGeometry(r, 1), s: [1.45, 0.55, 1.2], lump: 0.08, f: 2.5 },
+  { geo: (r) => new THREE.OctahedronGeometry(r, 1), s: [1.5, 0.75, 0.85], lump: 0.12, f: 2 },
+  { geo: (r) => new THREE.IcosahedronGeometry(r, 1), s: [1, 0.95, 1], lump: 0.22, f: 1.6 },
+  { geo: (r) => new THREE.IcosahedronGeometry(r, 2), s: [1.2, 0.95, 0.85], lump: 0.2, f: 4.2 },
+];
+
+/** A lumpy rock of about radius r in one of the ROCKS shapes, lying on y = 0 at a random heading. */
+function rock(r: number, kind: number, m: THREE.Material) {
+  const k = ROCKS[kind % ROCKS.length];
+  const geo = k.geo(r);
+  // Lumps come from the vertex's direction, so the copies of a shared corner move together (no cracks).
+  const sp = geo.attributes.position;
+  const ph = T.rand() * 10;
+  for (let i = 0; i < sp.count; i++) {
+    const x = sp.getX(i) / r, y = sp.getY(i) / r, z = sp.getZ(i) / r;
+    const s = 1 + Math.sin(x * k.f + ph) * Math.cos(z * k.f * 0.9 + ph) * k.lump + Math.sin(y * k.f * 1.4 + ph * 2) * k.lump * 0.45;
+    sp.setXYZ(i, sp.getX(i) * s, sp.getY(i) * s, sp.getZ(i) * s);
+  }
+  geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo, m);
+  mesh.position.y = r * k.s[1] * 0.7;
+  mesh.rotation.set((T.rand() - 0.5) * 0.4, T.rand() * 6, (T.rand() - 0.5) * 0.4);
+  mesh.scale.set(...k.s);
+  return mesh;
+}
+
+/** Fire garden, about 1.7 m across: a gravel bed with the campfire in the middle, ringed by big rocks with moss in
+ *  their gaps and round shrubs at the edge, and a mountain pine growing at the back left. */
+export function fireGarden() {
+  const g = group('fireGarden');
+  T.reseed(37);
+  const R = 0.7; // rock ring radius
+
+  // Gravel bed on a dark base
+  g.add(at(cyl(R - 0.02, R, 0.006, M.ash, 48), 0, 0, 0));
+  const pebbles = 1800;
+  const gravel = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), M.gravel, pebbles);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(), e = new THREE.Euler(), c = new THREE.Color();
+  for (let i = 0; i < pebbles; i++) {
+    const a = T.rand() * Math.PI * 2, d = 0.2 + Math.sqrt(T.rand()) * (R - 0.24), k = 0.007 + T.rand() * 0.011;
+    p.set(Math.cos(a) * d, k * 0.45, Math.sin(a) * d);
+    q.setFromEuler(e.set(T.rand() * 3, T.rand() * 3, T.rand() * 3));
+    s.set(k * (1 + T.rand() * 0.4), k * 0.6, k);
+    gravel.setMatrixAt(i, m4.compose(p, q, s));
+    gravel.setColorAt(i, c.setHSL(0.08, 0.03 + T.rand() * 0.04, 0.2 + T.rand() * 0.2));
+  }
+  g.add(gravel);
+
+  // Ring of big rocks, a few stacked on the back ones, so the ring rises behind the fire
+  const n = 15;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + T.rand() * 0.12, back = Math.max(0, -Math.sin(a)); // 1 at the back, 0 at the front
+    const r = 0.1 + T.rand() * 0.05 + back * 0.05;
+    const st = rock(r, i * 5, M.stones[i % M.stones.length]);
+    g.add(at(st, Math.cos(a) * R, 0, Math.sin(a) * R * 0.92));
+    if (back > 0.5 && i % 2) g.add(at(rock(r * 0.75, i * 3 + 1, M.stones[(i + 1) % M.stones.length]), Math.cos(a) * (R + 0.04), r * 0.9, Math.sin(a) * (R + 0.04) * 0.92));
+  }
+  // Moss in the gaps between rocks
+  for (let i = 0; i < 16; i++) {
+    const a = ((i + 0.5) / 16) * Math.PI * 2, rr = R + (T.rand() - 0.4) * 0.12;
+    const moss = new THREE.Mesh(new THREE.SphereGeometry(0.05 + T.rand() * 0.04, 14, 7, 0, Math.PI * 2, 0, Math.PI / 2), i % 3 ? M.moss : M.mossLight);
+    moss.scale.y = 0.5;
+    g.add(at(moss, Math.cos(a) * rr, 0, Math.sin(a) * rr * 0.92));
+  }
+  // Round shrubs at the edge
+  for (const [a, r] of [[-2.2, 0.15], [-0.6, 0.17], [0.35, 0.12], [2.55, 0.13]]) g.add(at(shrub(r), Math.cos(a) * (R + 0.1), 0, Math.sin(a) * (R + 0.1) * 0.92));
+
+  // Mountain pine at the back left, rooted among the rocks
+  const tree = at(pineTree(1.9), -0.4, 0, -0.42);
+  tree.rotation.y = 0.5;
   g.add(tree);
+
+  const f = fire();
+  f.scale.setScalar(0.6); // a small cooking fire, not a bonfire, for the size of the ring
+  g.add(f);
   return g;
 }

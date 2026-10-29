@@ -1,5 +1,6 @@
 ---
-// Work-in-progress campfire scene (step 1: figures only, free camera). Not linked from the site yet.
+// Work-in-progress campfire scene. The laptop shows the Saleng Labs site (/) live; clicking it zooms in so the site
+// can be used. Not linked from the site yet.
 ---
 
 <!doctype html>
@@ -11,33 +12,45 @@
     <title>Campfire | Saleng Labs</title>
   </head>
   <body>
-    <canvas id="campfire" aria-label="3D campfire scene with a kiosk, a desk of devices, a log table, a jade plant and a bonsai"></canvas>
-    <p class="hint">Drag to look around. Scroll or pinch to zoom in.</p>
+    <canvas id="campfire" aria-label="3D scene: a desk of devices, a fire garden with a mountain pine, and a kiosk. The laptop shows the Saleng Labs website."></canvas>
+    <p class="hint">Drag to look around. Scroll or pinch to zoom. Click the laptop to open the site.</p>
     <div class="zoom" role="group" aria-label="Zoom">
       <button type="button" data-zoom="0.25" aria-label="Zoom in">+</button>
       <button type="button" data-zoom="-0.25" aria-label="Zoom out">&minus;</button>
     </div>
+    <button type="button" class="back" hidden>&larr; Back to the campfire</button>
 
     <script>
       import { mountCampfire } from '../scripts/campfire/scene';
-      const { zoomBy } = mountCampfire(document.getElementById('campfire') as HTMLCanvasElement);
+      const back = document.querySelector<HTMLButtonElement>('.back')!;
+      const { zoomBy, exitFocus } = mountCampfire(document.getElementById('campfire') as HTMLCanvasElement, '/', (focused) => {
+        document.body.classList.toggle('focused', focused);
+        back.hidden = !focused;
+      });
       document.querySelectorAll<HTMLButtonElement>('[data-zoom]').forEach((b) => b.addEventListener('click', () => zoomBy(Number(b.dataset.zoom))));
+      back.addEventListener('click', exitFocus);
     </script>
 
     <style is:global>
       html, body { margin: 0; height: 100%; background: #07080a; overflow: hidden; }
       #campfire { display: block; width: 100vw; height: 100svh; touch-action: none; }
       .hint {
-        position: fixed; left: 16px; bottom: 16px; margin: 0;
+        position: fixed; left: 16px; bottom: 16px; margin: 0; z-index: 2;
         font: 13px/1.4 system-ui, sans-serif; color: #8b8f96;
       }
-      .zoom { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
-      .zoom button {
-        width: 40px; height: 40px; border-radius: 50%; border: 1px solid #2a2d31; background: #121417cc;
-        color: #d6d8db; font: 20px/1 system-ui, sans-serif; cursor: pointer;
+      .zoom { position: fixed; right: 16px; bottom: 16px; z-index: 2; display: flex; flex-direction: column; gap: 6px; }
+      .zoom button, .back {
+        border: 1px solid #2a2d31; background: #121417cc; color: #d6d8db; cursor: pointer;
       }
-      .zoom button:hover { border-color: #3ecf8e; color: #3ecf8e; }
-      .zoom button:focus-visible { outline: 2px solid #3ecf8e; outline-offset: 2px; }
+      .zoom button { width: 40px; height: 40px; border-radius: 50%; font: 20px/1 system-ui, sans-serif; }
+      .zoom button:hover, .back:hover { border-color: #3ecf8e; color: #3ecf8e; }
+      .zoom button:focus-visible, .back:focus-visible { outline: 2px solid #3ecf8e; outline-offset: 2px; }
+      .hint, .zoom { transition: opacity 0.3s; }
+      .focused .hint, .focused .zoom { opacity: 0; pointer-events: none; }
+      .back {
+        position: fixed; left: 16px; top: 16px; z-index: 2; padding: 8px 14px; border-radius: 999px;
+        font: 14px/1.2 system-ui, sans-serif;
+      }
     </style>
   </body>
 </html>

@@ -49,16 +49,6 @@ export const wood = (base: string, grain: string) =>
     }),
   );
 
-/** The same grain turned to run vertically, for upright boards. */
-export const woodV = (base: string, grain: string) =>
-  once(`woodV${base}`, () => {
-    const t = wood(base, grain).clone();
-    t.center.set(0.5, 0.5);
-    t.rotation = Math.PI / 2;
-    t.needsUpdate = true;
-    return t;
-  });
-
 function ringLines(g: CanvasRenderingContext2D, c: number, max: number, colors: string[]) {
   for (let r = 4; r < max; r += 3 + rand() * 5) {
     g.strokeStyle = colors[Math.floor(rand() * colors.length)];
@@ -75,58 +65,6 @@ function ringLines(g: CanvasRenderingContext2D, c: number, max: number, colors: 
   }
   g.globalAlpha = 1;
 }
-
-/** Tree rings for the log table's top: weathered wood darkening toward a reddish inner-bark band, then a rough rim
- *  in the same colours as the bark() on the sides, and a few drying cracks. */
-export const rings = () =>
-  once('rings', () =>
-    make(512, 512, (g) => {
-      reseed(5);
-      const wood = g.createRadialGradient(256, 256, 0, 256, 256, 236);
-      wood.addColorStop(0, '#b8915c');
-      wood.addColorStop(0.75, '#ad8653');
-      wood.addColorStop(1, '#8c663c');
-      g.fillStyle = wood;
-      g.fillRect(0, 0, 512, 512);
-      ringLines(g, 256, 230, ['#93683f', '#7e5634', '#a07448']);
-      // Inner bark: a thin reddish band, then the bark rim, which is uneven and streaked like the sides
-      g.globalAlpha = 1;
-      g.lineWidth = 6;
-      g.strokeStyle = '#7c5228';
-      g.beginPath();
-      g.arc(256, 256, 233, 0, Math.PI * 2);
-      g.stroke();
-      g.fillStyle = '#5c4026';
-      g.beginPath();
-      g.arc(256, 256, 256, 0, Math.PI * 2);
-      for (let a = 0; a <= 180; a++) {
-        const th = (a / 180) * Math.PI * 2, r = 236 + Math.sin(th * 7) * 2 + Math.sin(th * 19 + 1) * 1.5;
-        if (a) g.lineTo(256 + Math.cos(-th) * r, 256 + Math.sin(-th) * r);
-        else g.moveTo(256 + r, 256);
-      }
-      g.fill('evenodd');
-      for (let i = 0; i < 900; i++) {
-        const th = rand() * Math.PI * 2, r0 = 236 + rand() * 20, l = 3 + rand() * 9;
-        g.strokeStyle = rand() < 0.5 ? '#3a2816' : '#7a5a34';
-        g.globalAlpha = 0.3 + rand() * 0.5;
-        g.lineWidth = 1 + rand() * 2.5;
-        g.beginPath();
-        g.moveTo(256 + Math.cos(th) * r0, 256 + Math.sin(th) * r0);
-        g.lineTo(256 + Math.cos(th) * (r0 + l), 256 + Math.sin(th) * (r0 + l));
-        g.stroke();
-      }
-      g.globalAlpha = 1;
-      g.strokeStyle = '#5a3a24';
-      g.lineWidth = 2;
-      for (let i = 0; i < 5; i++) {
-        const a = rand() * Math.PI * 2, r = 80 + rand() * 90;
-        g.beginPath();
-        g.moveTo(256 + Math.cos(a) * 18, 256 + Math.sin(a) * 18);
-        g.lineTo(256 + Math.cos(a + 0.08) * r, 256 + Math.sin(a + 0.08) * r);
-        g.stroke();
-      }
-    }),
-  );
 
 /** Cut log end: rings with a charred rim. */
 export const endGrain = () =>
@@ -162,26 +100,6 @@ export const bark = () =>
     t.repeat.set(3, 1);
     return t;
   });
-
-/** Fire pit ground: scorched in the middle, packed earth outward, with grit. */
-export const dirt = () =>
-  once('dirt', () =>
-    make(512, 512, (g) => {
-      reseed(13);
-      const grd = g.createRadialGradient(256, 256, 20, 256, 256, 256);
-      grd.addColorStop(0, '#15100d');
-      grd.addColorStop(0.45, '#35271c');
-      grd.addColorStop(1, '#4a3726');
-      g.fillStyle = grd;
-      g.fillRect(0, 0, 512, 512);
-      for (let i = 0; i < 3500; i++) {
-        g.fillStyle = rand() < 0.5 ? '#22180f' : '#76604a';
-        g.globalAlpha = 0.3 + rand() * 0.5;
-        const s = rand() * 2.5 + 0.5;
-        g.fillRect(rand() * 512, rand() * 512, s, s);
-      }
-    }),
-  );
 
 /** Soft round dot, for sparks and steam. */
 export const soft = () =>
