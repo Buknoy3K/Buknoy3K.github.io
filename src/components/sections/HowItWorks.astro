@@ -1,0 +1,139 @@
+---
+import { solution, steps } from '../../config/site';
+---
+
+<section class="field field-fog chapter how" id="how" data-chapter="fog">
+  <div class="wrap">
+    <div class="intro">
+      <h2 class="h2" data-rise>From paper to system</h2>
+      <div class="intro-text" data-rise>
+        <p>{solution.text}</p>
+        <ul class="points">
+          {solution.points.map((p) => <li>{p}</li>)}
+        </ul>
+      </div>
+    </div>
+
+    <div class="acc" data-acc data-rise>
+      {steps.map((s, i) => (
+        <div class="stage" style={`--tone:var(--pine-${i + 1})`} data-open={i === 0 ? '' : undefined}>
+          <button type="button" class="stage-name" aria-expanded={i === 0 ? 'true' : 'false'} aria-controls={`stage-${i}`}>
+            <span>{s.title}</span>
+          </button>
+          <div class="stage-body" id={`stage-${i}`}>
+            <p>{s.text}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  const acc = document.querySelector<HTMLElement>('[data-acc]');
+  if (acc) {
+    const stages = [...acc.querySelectorAll<HTMLElement>('.stage')];
+    stages.forEach((stage) => {
+      stage.querySelector('button')!.addEventListener('click', () => {
+        stages.forEach((s) => {
+          const open = s === stage;
+          s.toggleAttribute('data-open', open);
+          s.querySelector('button')!.setAttribute('aria-expanded', String(open));
+        });
+      });
+    });
+  }
+</script>
+
+<style>
+  .intro {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .h2 { grid-column: 1 / 7; }
+  .intro-text { grid-column: 7 / 12; font-size: var(--step-body); }
+  .points { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .points li { background: var(--fog-2); padding: 6px 12px; font-weight: 500; font-size: var(--step-body); }
+
+  .acc { margin-top: 64px; display: flex; flex-direction: column; color: var(--fog); }
+  .stage { background: var(--tone); }
+  .stage-name {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 64px;
+    padding: 0 20px;
+    font: 900 var(--step-body)/1 var(--display);
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .stage-name:focus-visible { outline: 3px solid var(--resin); outline-offset: -3px; }
+  .stage-body { padding: 0 20px 24px; font-size: var(--step-body); max-width: 46ch; }
+
+  /* With script: one horizontal accordion; the open stage takes most of the row */
+  .js .acc { flex-direction: row; height: 520px; }
+  .js .stage {
+    position: relative;
+    flex: 0 0 14%;
+    overflow: hidden;
+    transition: flex-basis 450ms var(--ease-in-out);
+  }
+  .js .stage[data-open] { flex-basis: 58%; }
+  .js .stage-name {
+    position: absolute;
+    inset: 0;
+    align-items: flex-end;
+    padding: 24px;
+  }
+  .js .stage-name span {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: var(--step-lead);
+    white-space: nowrap;
+  }
+  .js .stage[data-open] .stage-name { cursor: default; align-items: flex-start; }
+  .js .stage[data-open] .stage-name span { writing-mode: horizontal-tb; transform: none; font-size: var(--step-title); }
+  .js .stage-body {
+    position: absolute;
+    left: 24px;
+    bottom: 24px;
+    width: 36ch;
+    max-width: calc(100% - 48px);
+    padding: 0;
+    font-size: var(--step-body);
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity 250ms ease, transform 250ms var(--ease-out);
+  }
+  .js .stage[data-open] .stage-body {
+    opacity: 1;
+    transform: none;
+    transition-delay: 200ms;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .js .stage:not([data-open]):hover { filter: brightness(1.12); }
+  }
+
+  @media (max-width: 960px) {
+    .h2 { grid-column: 1 / -1; }
+    .intro-text { grid-column: 1 / -1; }
+  }
+  @media (max-width: 760px) {
+    .js .acc { flex-direction: column; height: auto; }
+    .js .stage { flex: none; }
+    .js .stage-name { position: static; padding: 0 16px; align-items: center; }
+    .js .stage-name span,
+    .js .stage[data-open] .stage-name span { writing-mode: horizontal-tb; transform: none; font-size: var(--step-body); }
+    .js .stage-body { position: static; width: auto; max-width: none; padding: 0 16px 20px; font-size: var(--step-body); display: none; }
+    .js .stage[data-open] .stage-body { display: block; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .js .stage { transition: none; }
+  }
+</style>

@@ -1,0 +1,128 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import CTA from '../../components/sections/CTA.astro';
+import ProductVisual from '../../components/products/ProductVisual.astro';
+import { products, type Product } from '../../config/site';
+
+export function getStaticPaths() {
+  return products.map((p) => ({ params: { slug: p.slug }, props: { product: p } }));
+}
+
+const { product: p } = Astro.props as { product: Product };
+const live = p.status === 'live';
+const [lead, ...more] = p.shots;
+---
+
+<Base title={p.name} description={p.short}>
+  <section class="field p-hero" style={`--bg:${p.tint}; --ink:var(--night); --soft:#22281f`} data-chapter="tint">
+    <div class="wrap">
+      <a href="/#products" class="back link">All products</a>
+      <h1 data-rise>{p.name}</h1>
+      <div class="p-grid">
+        <div class="p-text" data-rise>
+          <p class="lead">{p.short}</p>
+          <p class="meta">{live ? 'Live' : 'In development'} · For {p.for.toLowerCase()}</p>
+        </div>
+        <div class="p-picture" data-unveil>
+          {lead ? (
+            <Image src={lead.src} alt={lead.caption} widths={[700, 1100, 1500]} sizes="(max-width: 960px) 100vw, 56vw" loading="eager" />
+          ) : (
+            <ProductVisual kind={p.visual} />
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="field field-fog chapter p-body" data-chapter="fog">
+    <div class="wrap two">
+      <div data-rise>
+        <h2>The problem</h2>
+        <p class="problem">{p.problem}</p>
+      </div>
+      <div data-rise>
+        <h2>{live ? 'What we built' : 'What we’re building'}</h2>
+        <ul class="built">
+          {p.built.map((b) => <li>{b}</li>)}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  {p.results && p.results.length > 0 && (
+    <section class="field field-night chapter p-results" data-chapter="night">
+      <div class="wrap">
+        <h2 data-rise>What changed</h2>
+        <ul>
+          {p.results.map((r) => <li data-rise>{r}</li>)}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  {more.length > 0 && (
+    <section class="field field-fog chapter p-shots" data-chapter="fog">
+      <div class="wrap">
+        <h2 data-rise>More screens</h2>
+        <div class="shots">
+          {more.map((s) => (
+            <figure data-unveil>
+              <Image src={s.src} alt={s.caption} widths={[700, 1100, 1500]} sizes="(max-width: 960px) 100vw, 90vw" />
+              <figcaption>{s.caption}</figcaption>
+            </figure>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <CTA />
+</Base>
+
+<style>
+  .p-hero { padding: calc(var(--bar-h) + 48px) 0 clamp(64px, 8vw, 120px); }
+  .back { font-weight: 500; font-size: var(--step-small); }
+  h1 { margin-top: 32px; font-size: var(--step-display); }
+  .p-grid {
+    margin-top: 48px;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .p-text { grid-column: 1 / 6; display: grid; gap: 16px; }
+  .meta { font-weight: 500; }
+  .p-picture { grid-column: 6 / 13; aspect-ratio: 16 / 10; overflow: hidden; background: var(--fog); }
+  .p-picture :global(img) { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 64px; }
+  .p-body h2, .p-shots h2 { font-size: var(--step-title); line-height: 1; margin-bottom: 28px; }
+  .problem { font-size: var(--step-lead); line-height: 1.4; }
+  .built { display: grid; }
+  .built li { padding: 16px 18px; font-size: var(--step-body); }
+  .built li:nth-child(odd) { background: var(--fog-2); }
+
+  .p-results h2 { font-size: var(--step-title); line-height: 1; margin-bottom: 40px; }
+  .p-results li {
+    font: 900 var(--step-title)/1.05 var(--display);
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+  .p-results li + li { margin-top: 28px; }
+  .p-results li:nth-child(even) { color: var(--resin); }
+
+  .shots { display: grid; gap: 40px; }
+  figure { margin: 0; }
+  figcaption { margin-top: 12px; font-size: var(--step-small); color: var(--soft); }
+
+  @media (max-width: 960px) {
+    .p-text, .p-picture { grid-column: 1 / -1; }
+    .two { grid-template-columns: 1fr; gap: 64px; }
+  }
+  @media (max-width: 760px) {
+    h1 { font-size: 13vw; }
+    .p-results li { font-size: 8vw; }
+  }
+</style>

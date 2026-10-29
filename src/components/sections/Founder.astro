@@ -1,0 +1,59 @@
+---
+import { founder, brand } from '../../config/site';
+
+// The bio is the founder's own words: it is shown verbatim, only a few phrases are highlighted.
+const marks: [string, string][] = [
+  ['manual processes', 'resin'],
+  ['room there is for improvement', 'pine'],
+  ['everyone deserves a system', 'ember'],
+];
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const sentences = founder.bio.match(/[^.]+\.\s*/g) ?? [founder.bio];
+const last = sentences.pop()!.trim();
+let body = esc(sentences.join(''));
+for (const [phrase, tone] of marks) {
+  body = body.replace(esc(phrase), `<mark class="hl hl-${tone}">${esc(phrase)}</mark>`);
+}
+const town = brand.location.split(',')[0];
+---
+
+<section class="field field-night chapter team" id="team" data-chapter="night">
+  <div class="wrap">
+    <h2 data-rise>Built in {town}</h2>
+    <p class="story" data-rise>
+      <strong>{founder.name}</strong>, {founder.role.toLowerCase().replace(' · ', ', ')}. <Fragment set:html={body} />
+      <a href="#contact" class="hl hl-accent last">{last}</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  h2 { font-size: var(--step-title); line-height: 1; margin-bottom: 48px; }
+  .story {
+    columns: 2;
+    column-gap: 32px;
+    font-size: var(--step-lead);
+    line-height: 1.22;
+    color: var(--soft);
+    text-wrap: pretty;
+  }
+  .story strong { color: var(--ink); font-weight: 500; }
+  .story :global(.hl) {
+    color: var(--night);
+    padding: 0 0.1em;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .story :global(.hl-resin) { background: var(--resin); }
+  .story :global(.hl-pine) { background: var(--pine-4); color: var(--fog); }
+  .story :global(.hl-ember) { background: var(--ember); color: var(--fog); }
+  .hl-accent { background: var(--accent); text-decoration: none; transition: background-color 200ms ease; }
+  @media (hover: hover) and (pointer: fine) {
+    .hl-accent:hover { background: #fff; }
+  }
+
+  @media (max-width: 760px) {
+    .story { columns: 1; line-height: 1.25; }
+    .last { display: inline-block; margin-top: 24px; padding: 10px 0.2em; }
+  }
+</style>

@@ -1,0 +1,72 @@
+---
+import { Image } from 'astro:assets';
+import { brand, cta } from '../../config/site';
+import logs from '../../assets/world/pine-log-cross-sections-teutendorf-2016-09.jpg';
+
+const placeholderEmail = brand.email.endsWith('example.com');
+---
+
+<section class="field field-fog chapter cta" id="contact" data-chapter="fog">
+  <div class="row">
+    <div class="flank photo" data-unveil>
+      <Image src={logs} alt="Cut pine logs, the resin-rich heartwood shown in cross-section" widths={[400, 800]} sizes="20vw" />
+    </div>
+    <div class="tile field field-accent" data-rise>
+      <h2>{cta.title}</h2>
+      <p>{cta.text}</p>
+      <div class="actions">
+        <a href={`mailto:${brand.email}?subject=Demo request`} class="btn" data-email-placeholder={placeholderEmail ? '' : undefined}>
+          Request a demo <span class="arrow" aria-hidden="true">→</span>
+        </a>
+        <a href={`mailto:${brand.email}`} class="link" data-email-placeholder={placeholderEmail ? '' : undefined}>
+          {placeholderEmail ? 'Or email us' : brand.email}
+        </a>
+      </div>
+      <p class="where">{brand.location}</p>
+    </div>
+    <div class="flank field field-resin" aria-hidden="true"></div>
+  </div>
+</section>
+
+<script>
+  import { demoToast } from '../../lib/toast';
+  document.querySelectorAll('[data-email-placeholder]').forEach((a) =>
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      demoToast('Contact email not set yet. Add it in src/config/site.ts.');
+    }),
+  );
+</script>
+
+<style>
+  .cta { overflow: hidden; }
+  .row {
+    display: grid;
+    grid-template-columns: 18vw 1fr 18vw;
+    gap: 12px;
+    margin: 0 -6vw;
+    min-height: 420px;
+  }
+  .flank { min-height: 100%; }
+  .photo :global(img) { width: 100%; height: 100%; object-fit: cover; }
+  .tile {
+    padding: 40px clamp(24px, 4vw, 64px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+  }
+  h2 { font-size: var(--step-head); }
+  .tile > p:not(.where) { font-size: var(--step-body); max-width: 44ch; }
+  .actions { margin-top: 8px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .actions .link { font-weight: 500; }
+  .where { font-size: var(--step-small); font-weight: 500; }
+
+  @media (max-width: 760px) {
+    .row { grid-template-columns: 1fr 1fr; margin: 0; padding: 0 var(--gutter); gap: 8px; }
+    .tile { grid-column: 1 / -1; grid-row: 1; min-height: 300px; padding: 28px 20px; }
+    .flank { height: 120px; min-height: 0; }
+    h2 { font-size: var(--step-title); }
+    .actions .btn { width: 100%; justify-content: center; }
+  }
+</style>

@@ -1,0 +1,106 @@
+---
+// The slim bar: wordmark, a few links, one action. It takes the colours of the chapter beneath it.
+import { brand } from '../../config/site';
+
+interface Props {
+  afterHero?: boolean;
+}
+const { afterHero = false } = Astro.props;
+
+const links = [
+  { href: '/#products', label: 'Products' },
+  { href: '/#model', label: 'Pricing' },
+  { href: '/#roadmap', label: 'Roadmap' },
+  { href: '/#team', label: 'Team' },
+];
+---
+
+<header class:list={['bar field field-fog', { waiting: afterHero }]} data-bar>
+  <div class="wrap bar-inner">
+    <a href="/#top" class="mark" aria-label={`${brand.name}, home`}>{brand.name}</a>
+    <nav aria-label="Sections">
+      {links.map((l) => <a href={l.href}>{l.label}</a>)}
+    </nav>
+    <a href="/#contact" class="bar-cta">Request a demo</a>
+  </div>
+</header>
+
+<script>
+  const bar = document.querySelector<HTMLElement>('[data-bar]')!;
+  const hero = document.querySelector<HTMLElement>('[data-hero]');
+  const chapters = [...document.querySelectorAll<HTMLElement>('[data-chapter]')];
+  const fields = ['fog', 'night', 'pine', 'resin', 'ember', 'accent'];
+  let current = 'fog';
+  let ticking = false;
+
+  const update = () => {
+    ticking = false;
+    const probe = bar.offsetHeight / 2;
+    if (hero) bar.classList.toggle('waiting', hero.getBoundingClientRect().bottom > probe);
+    // The chapter under the middle of the bar gives the bar its colours.
+    const under = chapters.find((c) => {
+      const r = c.getBoundingClientRect();
+      return r.top <= probe && r.bottom > probe;
+    });
+    const field = under?.dataset.chapter ?? 'fog';
+    if (field !== current && fields.includes(field)) {
+      bar.classList.replace(`field-${current}`, `field-${field}`);
+      current = field;
+    }
+  };
+  const onScroll = () => {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  update();
+</script>
+
+<style>
+  .bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    height: var(--bar-h);
+    transition:
+      background-color 300ms ease,
+      color 300ms ease,
+      transform 400ms var(--ease-out);
+  }
+  .bar.waiting { transform: translateY(-100%); }
+  .bar-inner { height: 100%; display: flex; align-items: center; gap: 32px; }
+  .mark {
+    font: 900 var(--step-lead)/1 var(--display);
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    text-decoration: none;
+    margin-right: auto;
+  }
+  nav { display: flex; gap: 28px; }
+  nav a, .bar-cta { font: 500 var(--step-small)/1.3 var(--text); text-decoration: none; }
+  .bar-cta {
+    display: inline-flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 16px;
+    background: var(--ink);
+    color: var(--bg);
+    transition: transform 160ms var(--ease-out), background-color 300ms ease, color 300ms ease;
+  }
+  .bar-cta:active { transform: scale(0.97); }
+  @media (hover: hover) and (pointer: fine) {
+    nav a { text-decoration: underline 2px transparent; text-underline-offset: 6px; transition: text-decoration-color 200ms ease; }
+    nav a:hover { text-decoration-color: currentColor; }
+  }
+  @media (max-width: 760px) {
+    nav { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bar { transition: background-color 300ms ease, color 300ms ease; }
+  }
+</style>

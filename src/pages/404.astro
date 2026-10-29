@@ -1,0 +1,30 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import ranges from '../assets/world/cordillera-mountain-ranges.jpg';
+---
+
+<Base title="Page not found">
+  <section class="field field-night nf" data-chapter="night">
+    <div class="wrap nf-grid">
+      <div>
+        <h1>Page not found</h1>
+        <p class="lead">This page doesn’t exist, or it has moved.</p>
+        <a href="/" class="btn btn-accent">Back to home <span class="arrow" aria-hidden="true">→</span></a>
+      </div>
+      <Image src={ranges} alt="Morning light over pine-covered ridges in the Cordillera" widths={[700, 1200]} sizes="(max-width: 760px) 100vw, 50vw" class="pic" />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf { min-height: 100svh; display: flex; align-items: center; padding: calc(var(--bar-h) + 48px) 0 64px; }
+  .nf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  h1 { font-size: var(--step-head); }
+  .lead { margin-top: 24px; }
+  .btn { margin-top: 40px; }
+  .pic { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+  @media (max-width: 760px) {
+    .nf-grid { grid-template-columns: 1fr; }
+  }
+</style>

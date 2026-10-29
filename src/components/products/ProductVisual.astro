@@ -1,0 +1,129 @@
+---
+// A working-looking fragment of each product's own screen, drawn in HTML (sample data that adds up).
+// DOC GEN has real screenshots, so this is used for the products still being built.
+interface Props {
+  kind: 'docs' | 'pos' | 'kiosk';
+}
+const { kind } = Astro.props;
+
+const menu = [
+  ['Banana cue', 20],
+  ['Turon', 15],
+  ['Palamig', 25],
+  ['Fishball', 10],
+  ['Kwek-kwek', 15],
+  ['Lumpia', 12],
+] as const;
+const order = [
+  ['Banana cue', 2, 40],
+  ['Turon', 3, 45],
+  ['Palamig', 1, 25],
+] as const;
+const total = order.reduce((sum, [, , amount]) => sum + amount, 0);
+const steps = ['Received', 'Washing', 'Drying', 'Ready'];
+const docs = ['Certification of Grades', 'Transcript of Records', 'Honorable Dismissal', 'Certification of GWA', 'Certification of Enrollment', 'Graduation'];
+---
+
+{kind === 'pos' && (
+  <div class="ui pos" data-ui aria-label="Sample Snack Stop POS checkout screen" role="img">
+    <div class="items">
+      {menu.map(([name, price], i) => (
+        <div class:list={['item', { picked: i < 3 }]}>
+          <span>{name}</span>
+          <span class="price">₱{price}</span>
+        </div>
+      ))}
+    </div>
+    <div class="ticket">
+      <div class="ticket-head">Order</div>
+      {order.map(([name, qty, amount]) => (
+        <div class="line"><span>{name}</span><span class="qty">×{qty}</span><span>₱{amount}</span></div>
+      ))}
+      <div class="total"><span>Total</span><span>₱{total}</span></div>
+      <div class="charge">Charge ₱{total}</div>
+      <div class="low">Turon: 4 left</div>
+    </div>
+  </div>
+)}
+
+{kind === 'kiosk' && (
+  <div class="ui kiosk" data-ui aria-label="Sample Laundry Kiosk order status screen" role="img">
+    <div class="k-top">
+      <span>Order</span>
+      <strong>#024</strong>
+    </div>
+    <ol class="track">
+      {steps.map((s, i) => (
+        <li class:list={{ done: i < 2, now: i === 1 }}><span class="mark"></span>{s}</li>
+      ))}
+    </ol>
+    <div class="msg">We’ll text 0917 ••• 4521 when it’s ready</div>
+  </div>
+)}
+
+{kind === 'docs' && (
+  <div class="ui docs" data-ui aria-label="The list of DOC GEN documents" role="img">
+    {docs.map((d, i) => <div class:list={['doc', { on: i === 0 }]}>{d}</div>)}
+  </div>
+)}
+
+<style>
+  .ui {
+    width: 100%;
+    height: 100%;
+    background: var(--fog);
+    color: var(--night);
+    font-family: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* POS: tap the items, see the total */
+  .pos { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; padding: 16px; }
+  .items { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start; }
+  .item {
+    background: #fff;
+    padding: 14px;
+    min-height: 76px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-weight: 500;
+    font-size: var(--step-small);
+  }
+  .item.picked { background: var(--resin); }
+  .price { font-size: var(--step-small); color: #4a4f47; }
+  .item.picked .price { color: var(--night); }
+  .ticket { background: #fff; padding: 14px; font-size: var(--step-small); display: flex; flex-direction: column; gap: 6px; }
+  .ticket-head { font-weight: 500; font-size: var(--step-small); color: #4a4f47; margin-bottom: 4px; }
+  .line { display: grid; grid-template-columns: 1fr auto 48px; gap: 8px; }
+  .line span:last-child, .total span:last-child { text-align: right; }
+  .qty { color: #4a4f47; }
+  .total { display: flex; justify-content: space-between; margin-top: 6px; padding-top: 8px; border-top: 2px solid var(--fog-2); font-weight: 500; font-size: var(--step-body); }
+  .charge { margin-top: auto; background: var(--night); color: var(--fog); text-align: center; padding: 12px 0; font-weight: 500; }
+  .low { background: var(--ember); color: var(--fog); padding: 6px 10px; font-size: var(--step-small); align-self: flex-start; }
+
+  /* Kiosk: where is my laundry */
+  .kiosk { padding: 28px; display: flex; flex-direction: column; gap: 20px; justify-content: center; }
+  .k-top { display: flex; align-items: baseline; gap: 12px; font-weight: 500; }
+  .k-top strong { font: 900 var(--step-title)/1 var(--display); letter-spacing: -0.03em; }
+  .track { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .track li { background: #fff; padding: 12px 10px; font-size: var(--step-small); font-weight: 500; display: flex; flex-direction: column; gap: 10px; color: #4a4f47; }
+  .track li.done { background: #4fb8d6; color: var(--night); }
+  .track li.now { background: var(--night); color: var(--fog); }
+  .mark { width: 12px; height: 12px; background: currentColor; border-radius: 50%; }
+  .msg { background: #fff; padding: 14px 16px; font-size: var(--step-small); }
+
+  /* DOC GEN: the document list */
+  .docs { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: center; }
+  .doc { background: #fff; padding: 14px; font-size: var(--step-small); font-weight: 500; }
+  .doc.on { background: var(--accent); }
+
+  @media (max-width: 760px) {
+    .pos { grid-template-columns: 1fr; }
+    .items { grid-template-columns: 1fr 1fr 1fr; }
+    .item { min-height: 60px; padding: 10px; font-size: var(--step-small); }
+    .track { grid-template-columns: 1fr 1fr; }
+    .kiosk { padding: 18px; }
+    .k-top strong { font-size: var(--step-title); }
+  }
+</style>

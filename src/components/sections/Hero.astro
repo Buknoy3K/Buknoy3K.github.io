@@ -1,0 +1,112 @@
+---
+import { Image } from 'astro:assets';
+import { hero, nav } from '../../config/site';
+import farms from '../../assets/world/la-trinidad-strawberry-farms-la-trinidad-benguet.jpg';
+---
+
+<section class="hero" id="top" data-hero>
+  <div class="panel">
+    <Image
+      src={farms}
+      alt="Strawberry farms in La Trinidad, Benguet, under a clear sky"
+      widths={[800, 1280, 1920]}
+      sizes="(max-width: 760px) 100vw, 84vw"
+      loading="eager"
+      fetchpriority="high"
+      class="photo"
+    />
+    <div class="scrim" aria-hidden="true"></div>
+    <div class="title">
+      <h1><span>Saleng</span> <span>Labs</span></h1>
+      <p class="subtitle">{hero.subtitle}</p>
+    </div>
+    <p class="text">{hero.text}</p>
+    <a href="#contact" class="btn btn-light cta">Request a demo <span class="arrow" aria-hidden="true">→</span></a>
+  </div>
+
+  <nav class="swatches" aria-label="Chapters">
+    {nav.map((l) => (
+      <a href={l.href} class={`swatch field field-${l.field}`}>
+        <span>{l.label}</span>
+        <span class="arrow" aria-hidden="true">↓</span>
+      </a>
+    ))}
+  </nav>
+</section>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: 5fr 1fr;
+    height: 100svh;
+    min-height: 640px;
+    padding: 10px;
+    background: var(--fog);
+  }
+  .panel {
+    position: relative;
+    overflow: hidden;
+    background: var(--night);
+    color: var(--fog);
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-template-rows: 1fr auto;
+    padding: 28px;
+    gap: 0 24px;
+  }
+  .photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 70%;
+    animation: drift 24s ease-in-out infinite alternate;
+    transform-origin: 50% 80%;
+  }
+  @keyframes drift {
+    from { transform: scale(1.02); }
+    to { transform: scale(1.09) translateY(-1%); }
+  }
+  /* A flat neutral veil so white type holds on the sky */
+  .scrim { position: absolute; inset: 0; background: rgba(21, 26, 22, 0.28); }
+  .title, .text, .cta { position: relative; }
+  .title { grid-column: 1 / -1; align-self: start; margin-top: 10vh; text-align: center; }
+  h1 { font-size: var(--step-display); line-height: 0.86; }
+  h1 span { display: block; }
+  .subtitle { margin-top: 36px; font-size: var(--step-lead); font-weight: 500; }
+  .text { grid-column: 1 / 6; grid-row: 2; align-self: end; font-size: var(--step-body); line-height: 1.45; max-width: 38ch; }
+  .cta { grid-column: 6 / 13; grid-row: 2; justify-self: end; align-self: end; }
+
+  .swatches { display: grid; grid-template-rows: repeat(5, 1fr); }
+  .swatch {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px;
+    font-weight: 500;
+    font-size: var(--step-body);
+    text-decoration: none;
+  }
+  .swatch.field-fog { --bg: var(--fog-2); }
+  .swatch .arrow { transition: transform 240ms var(--ease-out); }
+  @media (hover: hover) and (pointer: fine) {
+    .swatch:hover .arrow { transform: translateY(4px); }
+  }
+  .swatch:active span { transform: scale(0.97); }
+
+  @media (max-width: 1100px) {
+    .text { grid-column: 1 / 8; }
+  }
+  @media (max-width: 760px) {
+    .hero { grid-template-columns: 1fr; height: auto; min-height: 0; padding: 8px; }
+    .panel { height: 64svh; min-height: 460px; padding: 18px; grid-template-rows: 1fr auto; }
+    .title { margin-top: 6vh; }
+    h1 { font-size: 17vw; }
+    .subtitle { margin-top: 24px; }
+    .text { display: none; }
+    .cta { grid-column: 1 / -1; justify-self: center; }
+    .swatches { grid-template-rows: none; }
+    .swatch { min-height: 52px; align-items: center; padding: 0 16px; font-size: var(--step-small); }
+  }
+</style>

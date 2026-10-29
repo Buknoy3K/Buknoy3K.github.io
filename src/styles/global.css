@@ -1,0 +1,199 @@
+/* Saleng Labs: colour chapters. Every section is one flat field, taken from Benguet:
+   highland fog, pine, resin, ember and night. One typeface family, square corners, no lines. */
+:root {
+  /* Fields */
+  --fog: #e5e7e1;
+  --fog-2: #d8dbd3;
+  --night: #151a16;
+  --night-2: #222924;
+  --pine: #1b4430;
+  --pine-1: #143323;
+  --pine-2: #1f4d36;
+  --pine-3: #275c41;
+  --pine-4: #2f684b;
+  --resin: #e3a42b;
+  --resin-2: #c98d1c;
+  /* Strawberry red, the La Trinidad crop */
+  --ember: #c0222f;
+  --ember-2: #9c1a26;
+  --accent: #3ecf8e;
+  --accent-2: #2fb478;
+
+  /* Roles (overridden per field by .field-*) */
+  --bg: var(--fog);
+  --ink: var(--night);
+  --soft: #4a4f47;
+
+  --max: 1440px;
+  --gutter: clamp(16px, 2.2vw, 32px);
+  --bar-h: 56px;
+
+  --display: 'Red Hat Display', system-ui, sans-serif;
+  --text: 'Red Hat Text', system-ui, sans-serif;
+
+  /* Six sizes do the work: display, head, title, lead, body, small */
+  --step-small: 0.875rem;
+  --step-body: 1.125rem;
+  --step-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --step-title: clamp(1.75rem, 1.3rem + 1vw, 2.25rem);
+  --step-head: clamp(2.5rem, 1.2rem + 5vw, 5.5rem);
+  --step-display: clamp(4rem, 1rem + 8.6vw, 8.5rem);
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-padding-top: var(--bar-h);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--fog);
+  color: var(--night);
+  font-family: var(--text);
+  font-size: var(--step-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+img { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+h1, h2, h3, p, figure, blockquote, ul, ol { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+h1, h2, h3 {
+  font-family: var(--display);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 0.92;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+::selection { background: var(--accent); color: var(--night); }
+:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+
+/* Fields: each chapter sets its own ground and inks */
+.field { background: var(--bg); color: var(--ink); position: relative; }
+.field-fog { --bg: var(--fog); --ink: var(--night); --soft: #4a4f47; --chip: var(--night); --chip-ink: var(--fog); }
+.field-night { --bg: var(--night); --ink: var(--fog); --soft: #b9b6ab; --chip: var(--resin); --chip-ink: var(--night); }
+.field-pine { --bg: var(--pine); --ink: var(--fog); --soft: #c3cdbf; --chip: var(--resin); --chip-ink: var(--night); }
+.field-resin { --bg: var(--resin); --ink: var(--night); --soft: #3d2e12; --chip: var(--night); --chip-ink: var(--resin); }
+.field-ember { --bg: var(--ember); --ink: var(--fog); --soft: #f1d6cf; --chip: var(--night); --chip-ink: var(--fog); }
+.field-accent { --bg: var(--accent); --ink: var(--night); --soft: #123d29; --chip: var(--night); --chip-ink: var(--accent); }
+
+.wrap {
+  width: 100%;
+  max-width: calc(var(--max) + var(--gutter) * 2);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.chapter { padding: clamp(80px, 9vw, 128px) 0; }
+
+.h2 { font-size: var(--step-head); }
+.lead { font-size: var(--step-lead); line-height: 1.35; }
+.small { font-size: var(--step-small); }
+.soft { color: var(--soft); }
+
+/* Placeholders the founder must replace: an inverted chip, visible on every field */
+.ph {
+  background: var(--chip, var(--night));
+  color: var(--chip-ink, var(--fog));
+  padding: 0 0.12em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Buttons: flat, square, one fill */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 0;
+  background: var(--night);
+  color: var(--fog);
+  font: 500 var(--step-body)/1 var(--text);
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 160ms var(--ease-out), background-color 200ms ease;
+}
+.btn:active { transform: scale(0.97); }
+.btn-accent { background: var(--accent); color: var(--night); }
+.btn-light { background: var(--fog); color: var(--night); }
+.btn .arrow { transition: transform 200ms var(--ease-out); }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { background: var(--night-2); }
+  .btn-accent:hover { background: var(--accent-2); }
+  .btn-light:hover { background: #fff; }
+  .btn:hover .arrow { transform: translateX(3px); }
+}
+
+.link {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+  transition: text-underline-offset 200ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .link:hover { text-underline-offset: 0.32em; }
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Entrances: parts of each section rise in turn. They start faint, never invisible, so nothing is ever
+   hidden, even if the script never runs to the end of the page. */
+.js [data-rise] {
+  opacity: 0.25;
+  transform: translateY(24px);
+  transition: opacity 500ms var(--ease-out), transform 600ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 60ms);
+}
+.js [data-rise].in { opacity: 1; transform: none; }
+
+/* Pictures open from the bottom edge */
+.js [data-unveil] {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 1100ms var(--ease-in-out);
+}
+.js [data-unveil].in { clip-path: inset(0 0 0 0); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 20px);
+  background: var(--night);
+  color: var(--fog);
+  padding: 14px 20px;
+  font-size: var(--step-small);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease, transform 200ms var(--ease-out);
+  z-index: 100;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); /* taste-skill-ignore: the toast floats above the page */
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .js [data-rise] { transform: none; transition: opacity 300ms ease; }
+  .js [data-unveil] { clip-path: none; transition: none; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}

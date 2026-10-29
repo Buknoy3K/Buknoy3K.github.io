@@ -1,0 +1,94 @@
+---
+import { Image } from 'astro:assets';
+import { testimonials } from '../../config/site';
+import { ph } from '../../lib/ph';
+
+// The first quotation is spread across the screen on two lines; any others follow smaller.
+const [featured, ...rest] = testimonials;
+
+// Break the quote into two lines of about equal length. The type is sized from the longer line so it always fits.
+const spread = (quote: string) => {
+  const placeholder = /^\[.*\]$/.test(quote.trim());
+  const words = `“${quote.trim().replace(/^\[|\]$/g, '')}”`.split(/\s+/);
+  // the split that keeps the longer line as short as possible
+  let best = 1;
+  const longer = (at: number) => Math.max(words.slice(0, at).join(' ').length, words.slice(at).join(' ').length);
+  for (let at = 1; at < words.length; at++) if (longer(at) < longer(best)) best = at;
+  const lines = [words.slice(0, best), words.slice(best)].filter((l) => l.length);
+  const chars = Math.max(...lines.map((l) => l.join(' ').length));
+  return { lines, placeholder, chars };
+};
+const q = featured && spread(featured.quote);
+---
+
+{featured && (
+  <section class="field field-pine chapter quote" id="testimonials" data-chapter="pine">
+    <h2 class="visually-hidden">From the people who use it</h2>
+    <figure class="wrap">
+      <blockquote data-rise>
+        <p class:list={['lines', { sample: q.placeholder }]} style={`--chars:${q.chars}`} aria-hidden="true">
+          {q.lines.map((line) => (
+            <span class="line">{line.map((w) => <span>{w}</span>)}</span>
+          ))}
+        </p>
+        <p class="visually-hidden">{featured.quote}</p>
+      </blockquote>
+      <figcaption class="by" data-rise>
+        <span class="who">
+          {featured.photo && <Image src={featured.photo} alt="" width={96} height={96} class="face" />}
+          <span set:html={ph(featured.name)} />
+        </span>
+        <span set:html={ph(featured.role)} />
+        <span>{featured.sample ? 'Sample, replace before the pitch' : ''}</span>
+      </figcaption>
+    </figure>
+
+    {rest.length > 0 && (
+      <div class="wrap more">
+        {rest.map((t) => (
+          <figure data-rise>
+            <blockquote class="lead">“{t.quote}”</blockquote>
+            <figcaption><span set:html={ph(t.name)} />, <span set:html={ph(t.role)} /></figcaption>
+          </figure>
+        ))}
+      </div>
+    )}
+  </section>
+)}
+
+<style>
+  .quote { padding: clamp(140px, 12vw, 172px) 0; }
+  figure { margin: 0; }
+  .lines {
+    /* Wide enough for the longer line, never larger than the display size */
+    font: 900 min(var(--step-display), calc((100vw - 2 * var(--gutter)) / (var(--chars) * 0.66)))/1 var(--display);
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+  }
+  .lines.sample { color: var(--resin); }
+  .line { display: flex; justify-content: space-between; gap: 0.3em; }
+  .line + .line { margin-top: 0.6em; }
+
+  .by {
+    margin-top: 64px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    font-size: var(--step-body);
+    font-weight: 500;
+  }
+  .by > :nth-child(3) { text-align: right; }
+  .who { display: inline-flex; align-items: center; gap: 14px; }
+  .face { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+
+  .more { margin-top: 120px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+  .more figcaption { margin-top: 16px; }
+
+  @media (max-width: 760px) {
+    .by { grid-template-columns: 1fr; gap: 6px; font-size: var(--step-small); }
+    .by > :nth-child(2) { text-align: center; }
+    .by > :nth-child(3) { text-align: right; }
+    .more { grid-template-columns: 1fr; }
+  }
+</style>

@@ -1,0 +1,86 @@
+---
+import '../styles/global.css';
+import { brand } from '../config/site';
+import Bar from '../components/sections/Nav.astro';
+import Footer from '../components/sections/Footer.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** On the home page the bar waits until the hero has scrolled away (the hero has its own navigation). */
+  barAfterHero?: boolean;
+}
+
+const { title, description = brand.description, barAfterHero = false } = Astro.props;
+const pageTitle = title ? `${title} | ${brand.name}` : `${brand.name}: ${brand.tagline}`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#e9e5da" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+    <meta name="generator" content={Astro.generator} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@900&family=Red+Hat+Text:wght@400;500&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <Bar afterHero={barAfterHero} />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+    <div class="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      // Parts of each section rise in turn as the section enters (heading, then text, then pictures).
+      document.querySelectorAll<HTMLElement>('[data-chapter]').forEach((section) => {
+        section.querySelectorAll<HTMLElement>('[data-rise]').forEach((el, i) => {
+          if (!el.style.getPropertyValue('--i')) el.style.setProperty('--i', String(Math.min(i, 4)));
+        });
+      });
+      // Checked on scroll rather than per element, so a jump past a section (an anchor link) still shows
+      // everything above the fold line, not only what happened to cross the screen.
+      let waiting = [...document.querySelectorAll<HTMLElement>('[data-rise], [data-unveil]')];
+      let queued = false;
+      const reveal = () => {
+        queued = false;
+        const line = innerHeight;
+        waiting = waiting.filter((el) => {
+          if (el.getBoundingClientRect().top > line) return true;
+          el.classList.add('in');
+          return false;
+        });
+        if (!waiting.length) removeEventListener('scroll', onScroll);
+      };
+      const onScroll = () => {
+        if (!queued) {
+          queued = true;
+          requestAnimationFrame(reveal);
+        }
+      };
+      addEventListener('scroll', onScroll, { passive: true });
+      addEventListener('resize', onScroll);
+      reveal();
+
+      // One toast for the whole site (used while the email is still a placeholder).
+      const toast = document.querySelector<HTMLElement>('.toast')!;
+      let timer: number | undefined;
+      window.addEventListener('demo-toast', (e) => {
+        toast.textContent = (e as CustomEvent<string>).detail;
+        toast.classList.add('show');
+        clearTimeout(timer);
+        timer = window.setTimeout(() => toast.classList.remove('show'), 3200);
+      });
+    </script>
+  </body>
+</html>

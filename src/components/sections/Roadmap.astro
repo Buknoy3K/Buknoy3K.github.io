@@ -1,0 +1,68 @@
+---
+import { roadmap } from '../../config/site';
+import { ph } from '../../lib/ph';
+---
+
+<section class="field field-ember chapter roadmap" id="roadmap" data-chapter="ember">
+  <div class="wrap">
+    <div class="head" data-rise>
+      <h2>One business type at a time</h2>
+      <p>Each system we build for one customer becomes a product we can offer to every business like them.</p>
+    </div>
+
+    <ol class="poster">
+      {roadmap.map((r) => (
+        <li class:list={{ done: r.done }} data-rise>
+          <span class="name" set:html={ph(r.title)} />
+          <span class="fact">
+            <span class="when"><span set:html={ph(r.when)} /> · {r.done ? 'Shipped' : 'Planned'}</span>
+            <span set:html={ph(r.text)} />
+          </span>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+
+<style>
+  .head { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: end; margin-bottom: 80px; }
+  .head h2 { font-size: var(--step-title); line-height: 1; }
+  .head p { font-size: var(--step-body); max-width: 44ch; justify-self: end; }
+
+  .poster li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 32px;
+    transition: color 200ms ease;
+  }
+  .name {
+    font: 900 var(--step-head)/0.92 var(--display);
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+  }
+  .fact {
+    display: grid;
+    justify-items: end;
+    text-align: right;
+    font-size: var(--step-body);
+    flex: none;
+    max-width: 30ch;
+  }
+  .when { font-weight: 500; font-variant-numeric: tabular-nums; }
+  @media (hover: hover) and (pointer: fine) {
+    .poster li:hover { color: var(--resin); }
+  }
+
+  @media (max-width: 960px) {
+    .poster li { display: block; }
+    .poster li + li { margin-top: 64px; }
+    .fact { justify-items: start; text-align: left; margin-top: 8px; max-width: none; }
+  }
+  @media (max-width: 760px) {
+    .head { grid-template-columns: 1fr; margin-bottom: 48px; }
+    .head p { justify-self: start; }
+    .name { font-size: 12vw; display: block; }
+    .fact { justify-items: start; text-align: left; margin-top: 6px; font-size: var(--step-small); }
+  }
+</style>

@@ -1,0 +1,158 @@
+---
+import { Image } from 'astro:assets';
+import { traction } from '../../config/site';
+import { ph } from '../../lib/ph';
+import form from '../../assets/projects/doc-gen/form.png';
+
+// The time-back control uses only the pilot's own claim: close to an hour per certificate by hand.
+const start = 8;
+const workdays = 22;
+---
+
+<section class="field field-fog chapter proof" id="traction" data-chapter="fog">
+  <div class="wrap grid">
+    <div class="story">
+      <h2 class="h2" data-rise>Already in daily use</h2>
+      <h3 class="pilot" data-rise>{traction.pilot.title}</h3>
+      <p data-rise>{traction.pilot.text}</p>
+      <dl class="stats" data-rise>
+        {traction.stats.map((s) => (
+          <div class="stat">
+            <dt>{s.label}</dt>
+            <dd set:html={ph(s.value)} />
+          </div>
+        ))}
+      </dl>
+    </div>
+
+    <div class="side">
+      <figure class="shot" data-unveil>
+        <Image src={form} alt="DOC GEN: paste the student's record and the certificate form fills itself" widths={[700, 1100]} sizes="(max-width: 960px) 100vw, 46vw" />
+        <figcaption>DOC GEN at the registrar’s window: paste the record, and the form fills itself.</figcaption>
+      </figure>
+
+      <form class="calc" data-calc onsubmit="return false">
+        <label for="per-day">Certificates your office issues a day</label>
+        <div class="dial">
+          <button type="button" data-step="-1" aria-label="One fewer">−</button>
+          <input id="per-day" type="number" inputmode="numeric" min="1" max="99" value={start} />
+          <button type="button" data-step="1" aria-label="One more">+</button>
+        </div>
+        <p class="result" aria-live="polite">
+          <output for="per-day" data-hours>{start * workdays}</output>
+          <span>staff hours a month typed by hand, done in seconds with DOC GEN.</span>
+        </p>
+        <p class="note">At close to an hour per certificate by hand and {workdays} working days a month.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<script>
+  const calc = document.querySelector<HTMLFormElement>('[data-calc]');
+  if (calc) {
+    const input = calc.querySelector<HTMLInputElement>('input')!;
+    const out = calc.querySelector<HTMLOutputElement>('[data-hours]')!;
+    const clamp = (n: number) => Math.min(99, Math.max(1, Math.round(n) || 1));
+    const render = () => {
+      out.textContent = String(clamp(Number(input.value)) * 22);
+      out.classList.remove('tick');
+      void out.offsetWidth;
+      out.classList.add('tick');
+    };
+    calc.querySelectorAll<HTMLButtonElement>('[data-step]').forEach((b) =>
+      b.addEventListener('click', () => {
+        input.value = String(clamp(Number(input.value) + Number(b.dataset.step)));
+        render();
+      }),
+    );
+    input.addEventListener('input', render);
+    input.addEventListener('blur', () => {
+      input.value = String(clamp(Number(input.value)));
+      render();
+    });
+  }
+</script>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .story { grid-column: 1 / 6; display: grid; gap: 20px; }
+  .pilot { margin-top: 24px; font-size: var(--step-lead); line-height: 1.05; letter-spacing: -0.02em; }
+
+  .stats { margin: 24px 0 0; display: grid; }
+  .stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    padding: 14px 16px;
+  }
+  .stat:nth-child(odd) { background: var(--fog-2); }
+  dt { font-size: var(--step-body); }
+  dd { margin: 0; font: 900 var(--step-title)/1 var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .side { grid-column: 7 / 13; display: grid; gap: 8px; }
+  .shot { margin: 0; }
+  .shot :global(img) { width: 100%; }
+  figcaption { margin-top: 10px; font-size: var(--step-small); color: var(--soft); }
+
+  .calc { margin-top: 24px; background: var(--night); color: var(--fog); padding: 28px; display: grid; gap: 18px; }
+  label { font-weight: 500; }
+  .dial { display: flex; align-items: stretch; gap: 4px; }
+  .dial button, .dial input {
+    height: 64px;
+    border: 0;
+    border-radius: 0;
+    font: 900 var(--step-title)/1 var(--display);
+    color: var(--night);
+  }
+  .dial button {
+    width: 64px;
+    background: var(--resin);
+    cursor: pointer;
+    transition: transform 160ms var(--ease-out), background-color 200ms ease;
+  }
+  .dial button:active { transform: scale(0.94); }
+  @media (hover: hover) and (pointer: fine) {
+    .dial button:hover { background: #f0b744; }
+  }
+  .dial input {
+    width: 120px;
+    text-align: center;
+    background: var(--fog);
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  .dial input::-webkit-inner-spin-button, .dial input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .dial :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .result { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  output {
+    display: inline-block;
+    font: 900 var(--step-head)/0.9 var(--display);
+    letter-spacing: -0.03em;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  output.tick { animation: tick 320ms var(--ease-out); }
+  @keyframes tick {
+    from { transform: translateY(8px); opacity: 0.4; }
+    to { transform: none; opacity: 1; }
+  }
+  .result span { font-size: var(--step-body); max-width: 26ch; }
+  .note { font-size: var(--step-small); color: #b9b6ab; }
+
+  @media (max-width: 960px) {
+    .story, .side { grid-column: 1 / -1; }
+  }
+  @media (max-width: 760px) {
+    .calc { padding: 20px; }
+    .dial { width: 100%; }
+    .dial input { flex: 1; width: auto; }
+  }
+</style>

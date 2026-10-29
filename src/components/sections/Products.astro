@@ -1,0 +1,133 @@
+---
+import { Image } from 'astro:assets';
+import { products } from '../../config/site';
+import ProductVisual from '../products/ProductVisual.astro';
+import market from '../../assets/world/baguio-city-public-market-feb-2025.jpg';
+
+const statusLabel = { live: 'Live', dev: 'In development' };
+
+// Live products first, then the ones being built, then the "your business" folder.
+const ordered = [...products.filter((p) => p.status === 'live'), ...products.filter((p) => p.status !== 'live')];
+---
+
+<section class="field field-pine chapter products" id="products" data-chapter="pine">
+  <div class="wrap">
+    <h2 class="h2" data-rise>Our systems</h2>
+  </div>
+
+  <div class="stack">
+    {ordered.map((p, i) => (
+      <article class="folder" style={`--tint:${p.tint}; --n:${i}`}>
+        <div class="strip"><div class="wrap strip-in">
+          <h3 class="tab"><a href={`/products/${p.slug}`}>{p.name}</a></h3>
+          <span class="kind">{statusLabel[p.status]} · {p.for}</span>
+        </div></div>
+        <div class="open"><div class="wrap open-in">
+          <div class="picture" data-unveil>
+            {p.shots.length > 0 ? (
+              <Image src={p.shots[0].src} alt={p.shots[0].caption} widths={[700, 1100, 1500]} sizes="(max-width: 760px) 100vw, 56vw" class="shot" />
+            ) : (
+              <ProductVisual kind={p.visual} />
+            )}
+          </div>
+          <div class="about">
+            <p class="lead">{p.short}</p>
+            <p>{p.problem}</p>
+            <a href={`/products/${p.slug}`} class="btn">See {p.name} <span class="arrow" aria-hidden="true">→</span></a>
+          </div>
+        </div></div>
+      </article>
+    ))}
+  </div>
+
+  <!-- The last folder lies open below the pile instead of joining it, so the pile never covers its text -->
+  <div class="stack-end">
+    <article class="folder" style={`--tint:var(--fog); --n:${ordered.length}`}>
+      <div class="strip"><div class="wrap strip-in">
+        <h3 class="tab"><a href="#contact">Your business</a></h3>
+        <span class="kind">Next · Built for you</span>
+      </div></div>
+      <div class="open"><div class="wrap open-in">
+        <div class="picture" data-unveil>
+          <Image src={market} alt="Inside the Baguio City public market, stalls under coloured tarpaulins" widths={[700, 1100, 1500]} sizes="(max-width: 760px) 100vw, 56vw" class="shot" />
+        </div>
+        <div class="about">
+          <p class="lead">Have work you’re still doing the hard way?</p>
+          <p>Tell us what takes your team the most time. Every system above started as one business’s problem, and yours can be the next one we build.</p>
+          <a href="#contact" class="btn">Tell us about it <span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </div></div>
+    </article>
+  </div>
+</section>
+
+<style>
+  .products { padding-bottom: 0; }
+  .h2 { margin-bottom: clamp(48px, 6vw, 88px); }
+
+  /* Only the strips stick: they pile up under the bar as a folder index while the bodies scroll by */
+  .folder { display: contents; }
+  .strip, .open { background: var(--tint); color: var(--night); }
+  .strip {
+    position: sticky;
+    top: calc(var(--bar-h) + var(--n) * 64px);
+    z-index: 1;
+  }
+  .stack-end .strip { position: static; }
+  .strip-in {
+    height: 64px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  /* The tab rises from the band's top-left edge, shoulders cut */
+  .tab {
+    align-self: flex-start;
+    margin-top: -20px;
+    height: 56px;
+    min-width: 260px;
+    padding: 0 40px 0 20px;
+    display: flex;
+    align-items: center;
+    background: var(--night);
+    color: var(--tint);
+    font-size: var(--step-lead);
+    clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 100%, 0 100%);
+  }
+  .tab a { text-decoration: none; }
+  .kind { font-size: var(--step-small); font-weight: 500; padding-bottom: 20px; }
+
+  .open-in {
+    min-height: calc(80svh - 64px);
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 24px;
+    padding-top: 32px;
+    padding-bottom: 56px;
+    align-items: start;
+  }
+  .picture { grid-column: 1 / 8; aspect-ratio: 16 / 10; overflow: hidden; background: var(--fog); }
+  .shot { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .about { grid-column: 9 / 13; display: grid; gap: 18px; justify-items: start; }
+  .about p:not(.lead) { font-size: var(--step-body); }
+  .about .btn { margin-top: 8px; }
+
+  @media (hover: hover) and (pointer: fine) {
+    .tab { transition: padding-left 300ms var(--ease-out); }
+    .folder:hover .tab { padding-left: 28px; }
+  }
+
+  @media (max-width: 960px) {
+    .picture { grid-column: 1 / -1; }
+    .about { grid-column: 1 / -1; }
+  }
+  @media (max-width: 760px) {
+    .strip { position: static; margin-top: 28px; }
+    .tab { height: 44px; min-width: 0; font-size: var(--step-lead); margin-top: -20px; padding-right: 36px; }
+    .strip-in { height: auto; align-items: flex-start; flex-wrap: wrap; padding-bottom: 8px; }
+    .kind { padding: 0; align-self: center; font-size: var(--step-small); }
+    .open-in { min-height: 0; padding-top: 12px; padding-bottom: 32px; }
+    .picture { aspect-ratio: 4 / 3; }
+  }
+</style>
