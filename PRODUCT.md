@@ -8,10 +8,10 @@ web
 
 ## Users
 Primary: judges and investors at a pitch competition, reading the page on a projector or a laptop during and after the pitch. They need the problem, the market, the business model and the traction, in that order of weight.
-Secondary: owners and staff of schools, shops and offices in Benguet (then the Cordillera) deciding whether to hire Saleng Labs. The page should keep working as the client site after the pitch.
+Secondary: owners and staff of schools, shops and offices in Benguet (then the Cordillera) deciding whether to hire Saleng Works. The page should keep working as the client site after the pitch.
 
 ## Product Purpose
-Saleng Labs builds small, focused custom systems and automations for local businesses that still run on paper, one business at a time. Success for the page: a judge understands the business in one scroll, and an owner gets in touch.
+Saleng Works builds small, focused custom systems and automations for local businesses that still run on paper, one business at a time. Success for the page: a judge understands the business in one scroll, and an owner gets in touch.
 
 ## Positioning
 A local studio that builds around the client's existing workflow and own forms, then supplies and installs the hardware too (POS terminals, self-service kiosks, or the client's PC), trains staff on-site and stays on call. The systems work offline. It is priced for small businesses: a one-time build fee plus a small monthly support fee.
@@ -28,14 +28,14 @@ Customers today use logbooks, *listahan* notebooks, paper slips, receipts and ha
 - Open: real email (currently `hello@example.com`, so contact buttons show a toast), hosting (free, static), all market/traction/pricing figures.
 
 ## Brand Commitments
-- Name "Saleng Labs". Hero copy "Stop doing it the hard way." and the "Saleng starts the fire…" line were written by the founder; keep them.
+- Name "Saleng Works". Hero copy "Stop doing it the hard way." and the "Saleng starts the fire…" line were written by the founder; keep them.
 - The founder bio in `site.ts` is the founder's own wording; never rewrite it. Founder: Wayne V. Banase.
-- Never say the systems run only on the client's existing PC: Saleng Labs supplies hardware.
+- Never say the systems run only on the client's existing PC: Saleng Works supplies hardware.
 
 ## Evidence on Hand
 - DOC GEN screenshots: `src/assets/projects/doc-gen/tools.png`, `form.png`. Never use `home.png` publicly (its banner is a joke).
 - No real testimonials yet (one marked Sample), no customer logos, no press, no real figures. Numbers stay as bracket placeholders (`[00]`, `₱[000]`) until the founder supplies them. Never invent figures, quotes or customers.
-- No photographs of Saleng Labs' own work, team or clients.
+- No photographs of Saleng Works' own work, team or clients.
 
 ## Product Principles
 1. Show the real workflow before and after; the problem is manual work, not technology.

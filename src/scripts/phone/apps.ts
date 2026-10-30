@@ -51,7 +51,7 @@ export function mountPhone(root: HTMLElement) {
             h('div', { class: 'hours' }, [['9AM', 16], ['12PM', 19], ['3PM', 18], ['6PM', 15]].map(([t, d]) => h('span', null, h('small', null, t), `${d}°`)))),
           h('div', { class: 'w brand' },
             mark,
-            h('div', { class: 'w-txt' }, h('b', null, 'Saleng Labs'), h('small', null, 'Systems for local businesses')),
+            h('div', { class: 'w-txt' }, h('b', null, 'Saleng Works'), h('small', null, 'Systems for local businesses')),
             h('div', { class: 'chips' }, h('span', null, '2 demos'), h('span', null, '2 ideas')))),
 
         h('section', null,

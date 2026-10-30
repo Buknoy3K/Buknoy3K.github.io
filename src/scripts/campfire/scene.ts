@@ -3,7 +3,7 @@
 // it. Dragging turns the camera around the desk: sideways swings it round to either side (within limits, no full
 // orbit), and up and down tilts it a little lower or higher over the desk (never level with it, never overhead).
 // Scroll, pinch or the zoom buttons move it in or out from the default distance.
-// The laptop shows the live Saleng Labs site, the tablet the work desktop (/tablet), the phone a home screen of apps
+// The laptop shows the live Saleng Works site, the tablet the work desktop (/tablet), the phone a home screen of apps
 // (/phone) and the kiosk its welcome screen (/kiosk), each an iframe pinned onto its screen in 3D; clicking one flies the camera square onto its screen so the page can be scrolled and clicked.
 // The other things on the desk do something when clicked (the mug, the fire, the figure, the plant), or open a card,
 // a printed quote or the notebook over the scene (onOpen, given where the thing is on screen to grow from).
@@ -14,7 +14,7 @@ import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { fireGarden, kiosk, desk, roundRect, type Tick } from './models';
 
 const GARDEN_X = -1.75, KIOSK_X = 1.3; // the desk stands at x = 0, between them
-const LOOK = new THREE.Vector3(-0.1, 0.7, -0.04); // the camera circles this point, just above the desktop
+const LOOK = new THREE.Vector3(-0.1, 0.9, -0.04); // the camera circles this point, above the desktop (high, so the scene sits low under the title)
 const DIST = 3.1; // ...from this far away, at the default zoom
 const START = { yaw: 0, pitch: THREE.MathUtils.degToRad(23) }; // opening view: straight on, showing the garden, desk and kiosk
 const BASE_FOV = 47.5;
@@ -37,6 +37,7 @@ export function mountCampfire(
   onFocus: (focused: boolean) => void,
   onLamp: (on: boolean) => void,
   onOpen: (what: 'card' | 'quote' | 'notebook', from: DOMRect) => void,
+  onZoom: (zoomedIn: boolean) => void,
 ) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, stencil: true }); // the stencil keeps outlines to the edges
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -177,7 +178,7 @@ export function mountCampfire(
     return s;
   };
   const screens = [
-    mountScreen('laptop', 'laptopScreen', siteUrl, '/screens/site.webp', 'Saleng Labs website', SITE_W, true),
+    mountScreen('laptop', 'laptopScreen', siteUrl, '/screens/site.webp', 'Saleng Works website', SITE_W, true),
     mountScreen('tablet', 'tabletScreen', workUrl, '/screens/tablet.webp', 'Work', TABLET_W, false),
     mountScreen('phone', 'phoneScreen', phoneUrl, '/screens/phone.webp', 'Apps', PHONE_W, false, PHONE_R),
     mountScreen('kiosk', 'kioskScreen', kioskUrl, '/screens/kiosk.webp', 'Kiosk', KIOSK_W, false, 0, true),
@@ -223,8 +224,13 @@ export function mountCampfire(
   const want = new THREE.Vector2(START.yaw / YAW, ((START.pitch - PITCH.min) / (PITCH.max - PITCH.min)) * 2 - 1);
   const now = want.clone();
   let zoomWant = 0, zoomNow = 0, focusWant = 0, focusNow = 0; // zoom: -1 = furthest out, 0 = default, 1 = closest
+  let zoomedIn = false;
+  const zoomTo = (z: number) => {
+    zoomWant = THREE.MathUtils.clamp(z, -1, 1);
+    if (zoomWant > 0.05 !== zoomedIn) onZoom((zoomedIn = !zoomedIn)); // the page clears its title out of the way
+  };
   const zoomBy = (d: number) => {
-    if (!focusWant) zoomWant = THREE.MathUtils.clamp(zoomWant + d, -1, 1);
+    if (!focusWant) zoomTo(zoomWant + d);
   };
   const setFocus = (on: boolean, s = target) => {
     if (on === !!focusWant) return;
@@ -329,7 +335,7 @@ export function mountCampfire(
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const s = 2 / Math.min(canvas.clientWidth, canvas.clientHeight); // a full-height drag spans the up-down range
     if (pinch && pointers.size === 2) {
-      zoomWant = THREE.MathUtils.clamp(pinch.from + (spread() - pinch.d) * s * 0.75, -1, 1);
+      zoomTo(pinch.from + (spread() - pinch.d) * s * 0.75);
     } else if (drag) {
       want.set(
         THREE.MathUtils.clamp(drag.from.x - (e.clientX - drag.x) * s, -1, 1),
@@ -504,7 +510,15 @@ export function mountCampfire(
     css.render(cssScene, cssCamera);
   });
 
-  return { zoomBy, exitFocus: () => setFocus(false), toggleLamp };
+  // The same as clicking the thing with this name: flies onto a screen, or does what the thing does
+  const activate = (name: string) => {
+    const s = screens.find((s) => s.obj.name === name);
+    if (s) return setFocus(true, s);
+    const o = scene.getObjectByName(name);
+    if (o) use(o);
+  };
+
+  return { zoomBy, exitFocus: () => setFocus(false), toggleLamp, activate };
 }
 
 // Outlines: each hoverable thing gets a shell of copies of its meshes, pushed out a few pixels along their (smoothed)

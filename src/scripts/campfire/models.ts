@@ -783,12 +783,12 @@ function figurine() {
     hair.add(spike);
   }
 
-  // Super Saiyan mode: the hair (and brows) flare gold and stand up taller, the eyes turn teal, and a golden aura of
+  // Super Saiyan Blue: the hair (and brows) flare cyan and stand up taller, the eyes turn blue, and a blue aura of
   // flickering flame tongues wraps the figure, lighting the desk round it, with motes rising through it.
   const aura = group('aura');
   aura.visible = false;
   const tongues: { f: THREE.Mesh; R: number; H: number; ph: number; sp: number }[] = [];
-  for (const [color, op, n, R, H, ring] of [['#ffa51f', 0.075, 9, 0.036, 0.25, 0.032], ['#ffe27a', 0.05, 5, 0.026, 0.21, 0.02]] as const) {
+  for (const [color, op, n, R, H, ring] of [['#1f7bff', 0.085, 9, 0.036, 0.25, 0.032], ['#8fe6ff', 0.055, 5, 0.026, 0.21, 0.02]] as const) {
     const m = glow(color, op);
     for (let i = 0; i < n; i++) {
       const a = (i / n) * Math.PI * 2, f = new THREE.Mesh(flameGeo, m);
@@ -804,14 +804,14 @@ function figurine() {
   moteGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
   const motes = new THREE.Points(
     moteGeo,
-    new THREE.PointsMaterial({ size: 0.006, map: T.soft(), color: '#ffe48a', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
+    new THREE.PointsMaterial({ size: 0.006, map: T.soft(), color: '#b8f0ff', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
   );
   motes.frustumCulled = false;
   aura.add(motes);
-  const ki = new THREE.PointLight('#ffc23a', 0, 0.9, 1.4);
+  const ki = new THREE.PointLight('#3aa8ff', 0, 0.9, 1.4);
   ki.position.set(0, 0.11, 0.05);
   g.add(ki);
-  const black = new THREE.Color('#121214'), gold = new THREE.Color('#ffd84a'), teal = new THREE.Color('#19b3a0');
+  const black = new THREE.Color('#121214'), blue = new THREE.Color('#3fd0ff'), eyeBlue = new THREE.Color('#2a8dff');
   let hairMats: THREE.MeshStandardMaterial[] = [], eyeMats: THREE.MeshStandardMaterial[] = [];
   action(g, 7, (p, t) => {
     if (!hairMats.length) {
@@ -824,10 +824,10 @@ function figurine() {
     // Powering up flickers on and off before it holds
     const lv = swell(p, 0.12, 0.85) * (p < 0.12 ? 0.55 + 0.45 * Math.sign(Math.sin(t * 40)) : 1);
     for (const m of hairMats) {
-      m.color.lerpColors(black, gold, lv);
-      m.emissive.copy(gold).multiplyScalar(lv * 0.45);
+      m.color.lerpColors(black, blue, lv);
+      m.emissive.copy(blue).multiplyScalar(lv * 0.5);
     }
-    for (const m of eyeMats) m.color.lerpColors(black, teal, lv);
+    for (const m of eyeMats) m.color.lerpColors(black, eyeBlue, lv);
     hair.scale.set(1 + lv * 0.08, 1 + lv * 0.2, 1 + lv * 0.08);
     aura.visible = lv > 0.01;
     ki.intensity = lv * 0.3;
@@ -897,7 +897,7 @@ export function desk() {
   const pr = printer(), printerSet = group('printerSet', paper(), at(pr, 0, 0, -0.04)); // the printer stands on the paper, which sticks out in front of it
   printerSet.userData.play = pr.userData.play;
   const things: [THREE.Object3D, number, number, number, string][] = [
-    [big(figurine(), 1.1), col[0] - 0.04, back - 0.08, 0.2, 'Go Super Saiyan'],
+    [big(figurine(), 1.1), col[0] - 0.04, back - 0.08, 0.2, 'Go Super Saiyan Blue'],
     [printerSet, col[0], front - 0.05, 0.05, 'Print a quote'],
     [big(tablet(), S), col[1] - 0.07, back + 0.05, 0.2, 'See my work'],
     [big(laptop(), S), col[2], back + 0.05, 0, 'Browse the website'],

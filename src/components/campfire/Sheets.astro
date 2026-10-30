@@ -22,7 +22,7 @@ const leaves = Array.from({ length: pages.length / 2 }, (_, k) => [pages[2 * k],
   <div class="panel">
     <button type="button" class="callcard" aria-label="Calling card (click to turn it over)">
       <span class="side obverse">
-        <img src="/brand/saleng-labs-mark.svg" alt="" class="mark" width="64" height="64" />
+        <img src="/brand/saleng-works-mark.svg" alt="" class="mark" width="64" height="64" />
         <span class="brandname">{brand.name}</span>
         <span class="tagline">{brand.tagline}</span>
         <span class="who"><b>{founder.name}</b><span>{founder.role}</span></span>
@@ -33,7 +33,7 @@ const leaves = Array.from({ length: pages.length / 2 }, (_, k) => [pages[2 * k],
         </span>
       </span>
       <span class="side reverse">
-        <img src="/brand/saleng-labs-mark.svg" alt="" width="120" height="120" />
+        <img src="/brand/saleng-works-mark.svg" alt="" width="120" height="120" />
         <span class="brandname">{brand.name}</span>
       </span>
     </button>
@@ -50,7 +50,7 @@ const leaves = Array.from({ length: pages.length / 2 }, (_, k) => [pages[2 * k],
   <div class="panel">
     <div class="slot" aria-hidden="true"></div>
     <div class="receipt" role="document" aria-live="polite">
-      <p class="r-head"><img src="/brand/saleng-labs-mark.svg" alt="" width="34" height="34" /><b>{brand.name}</b></p>
+      <p class="r-head"><img src="/brand/saleng-works-mark.svg" alt="" width="34" height="34" /><b>{brand.name}</b></p>
       <p class="r-sub">Words for the road</p>
       <p class="r-meta"><span data-when></span><span data-no></span></p>
       <p class="r-rule" aria-hidden="true"></p>
@@ -77,7 +77,7 @@ const leaves = Array.from({ length: pages.length / 2 }, (_, k) => [pages[2 * k],
             <div class:list={['face', side ? 'verso' : 'recto', p.kind]}>
               {p.kind === 'cover' && (
                 <>
-                  <img src="/brand/saleng-labs-mark.svg" alt="" width="84" height="84" />
+                  <img src="/brand/saleng-works-mark.svg" alt="" width="84" height="84" />
                   <h2>Kind words</h2>
                   <p>from the people we’ve built for</p>
                   <span class="band" aria-hidden="true"></span>
@@ -87,7 +87,7 @@ const leaves = Array.from({ length: pages.length / 2 }, (_, k) => [pages[2 * k],
                 <>
                   <p class="hand">This notebook belongs to the businesses we work with.</p>
                   <p class="hand small">Here’s what they say, in their own words. Turn the page.</p>
-                  <img src="/brand/saleng-labs-mark.svg" alt="" width="44" height="44" class="stamp" />
+                  <img src="/brand/saleng-works-mark.svg" alt="" width="44" height="44" class="stamp" />
                 </>
               )}
               {p.kind === 'quote' && p.t && (
@@ -109,7 +109,7 @@ const leaves = Array.from({ length: pages.length / 2 }, (_, k) => [pages[2 * k],
                   </p>
                 </>
               )}
-              {p.kind === 'backcover' && <img src="/brand/saleng-labs-mark.svg" alt="" width="48" height="48" />}
+              {p.kind === 'backcover' && <img src="/brand/saleng-works-mark.svg" alt="" width="48" height="48" />}
               {(p.kind === 'quote' || p.kind === 'end' || p.kind === 'inside') && <span class="folio">{2 * k + side}</span>}
             </div>
           ))}

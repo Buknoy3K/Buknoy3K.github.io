@@ -147,7 +147,7 @@ export const receipt = () =>
   );
 
 /** Business card front. */
-/** The Saleng Labs campfire mark's outlines (in its 512 box): a flame with a hollow core, and two crossed logs. */
+/** The Saleng Works campfire mark's outlines (in its 512 box): a flame with a hollow core, and two crossed logs. */
 const MARK = {
   flame: 'M262 76c22 58 92 104 92 190c0 58-42 98-98 98s-98-40-98-96c0-40 20-70 46-90c-2 30 10 52 32 62c-16-54 0-112 26-164zM256 230c-22 32-40 52-40 82c0 22 18 38 40 38s40-16 40-38c0-30-18-50-40-82z',
   logs: ['M146 432L366 378', 'M146 378L366 432'],
@@ -158,7 +158,7 @@ export const cardFace = () =>
     make(512, 320, (g) => {
       g.fillStyle = '#17191c';
       g.fillRect(0, 0, 512, 320);
-      // The campfire mark, as in public/brand/saleng-labs-mark.svg (its 512 box drawn 80 px tall)
+      // The campfire mark, as in public/brand/saleng-works-mark.svg (its 512 box drawn 80 px tall)
       g.save();
       g.translate(18, 22);
       g.scale(80 / 512, 80 / 512);
@@ -170,7 +170,7 @@ export const cardFace = () =>
       g.restore();
       g.fillStyle = '#f2f2f2';
       g.font = '600 40px Inter, system-ui, sans-serif';
-      g.fillText('Saleng Labs', 40, 224);
+      g.fillText('Saleng Works', 40, 224);
       g.fillStyle = '#9aa0a6';
       g.font = '400 22px Inter, system-ui, sans-serif';
       g.fillText('Wayne V. Banase', 40, 262);
@@ -195,6 +195,6 @@ export const wordmark = () =>
       g.fillStyle = '#8b8f96';
       g.font = '600 44px Inter, system-ui, sans-serif';
       g.textAlign = 'center';
-      g.fillText('Saleng Labs', 256, 62);
+      g.fillText('Saleng Works', 256, 62);
     }),
   );

@@ -5,12 +5,12 @@ import docTools from '../assets/projects/doc-gen/tools.png';
 import docForm from '../assets/projects/doc-gen/form.png';
 
 export const brand = {
-  name: 'Saleng Labs',
+  name: 'Saleng Works',
   tagline: 'Custom systems for local businesses',
   description:
-    'Saleng Labs builds custom systems and automations for the schools, shops and offices that still run on paper.',
+    'Saleng Works builds custom systems and automations for the schools, shops and offices that still run on paper.',
   location: 'La Trinidad, Benguet',
-  email: 'salenglabs@gmail.com',
+  email: 'salengworks@gmail.com',
   phone: '0907 409 7035',
 };
 
@@ -52,7 +52,7 @@ export const problems = [
 
 export const solution = {
   title: 'One system, built around how you already work',
-  text: 'Saleng Labs builds small, focused systems for one business at a time. We bring and install the hardware too, from POS terminals to self-service kiosks, so you get one complete setup that works offline and is simple enough for new staff on day one.',
+  text: 'Saleng Works builds small, focused systems for one business at a time. We bring and install the hardware too, from POS terminals to self-service kiosks, so you get one complete setup that works offline and is simple enough for new staff on day one.',
   points: ['Hardware included', 'Works offline', 'Staff trained on-site', 'Local support'],
 };
 

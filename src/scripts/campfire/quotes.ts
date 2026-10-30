@@ -1,5 +1,6 @@
 // Quotes the campfire's receipt printer prints, one at random per click: words about life, mostly from Christian
-// writers (C.S. Lewis above all) and a few verses. Add or remove freely; `from` is the book or source, if known.
+// writers (C.S. Lewis above all), a few verses, and the Ibaloi and Kankanaey ways of home (the word as `by`, what it
+// is as `from`). Add or remove freely; `from` is the book or source, if known.
 export type Quote = { text: string; by: string; from?: string };
 
 export const quotes: Quote[] = [
@@ -23,4 +24,7 @@ export const quotes: Quote[] = [
   { text: 'I have learned to kiss the wave that throws me against the Rock of Ages.', by: 'Charles Spurgeon' },
   { text: 'Whatever you do, work at it with all your heart, as working for the Lord, not for human masters.', by: 'Colossians 3:23' },
   { text: 'Commit to the Lord whatever you do, and he will establish your plans.', by: 'Proverbs 16:3' },
+  { text: 'Don’t. It isn’t right. Do no harm, even when no one is watching.', by: 'Inayan', from: 'a Kankanaey teaching' },
+  { text: 'We help one another, and the work gets done.', by: 'Binnadang', from: 'an Ibaloi and Kankanaey way' },
+  { text: 'Today I work your field; tomorrow you work mine.', by: 'Ub-ubbo', from: 'Kankanaey shared work' },
 ];
