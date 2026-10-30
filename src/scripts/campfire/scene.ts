@@ -42,6 +42,7 @@ export function mountCampfire(
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, stencil: true }); // the stencil keeps outlines to the edges
   renderer.setPixelRatio(Math.min(devicePixelRatio, matchMedia('(pointer: coarse)').matches ? 1.5 : 2)); // phones: fewer pixels, cooler battery
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#07080a');
 
