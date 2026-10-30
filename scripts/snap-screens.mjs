@@ -17,11 +17,11 @@ const shots = [
 const browser = await puppeteer.launch({ executablePath: chrome });
 const page = await browser.newPage();
 for (const s of shots) {
-  await page.setViewport({ width: s.width, height: s.height, deviceScaleFactor: 2 });
+  await page.setViewport({ width: s.width, height: s.height, deviceScaleFactor: 1.5 }); // 1.5x: sharp in the scene; the live page takes over up close
   await page.goto(base + s.url, { waitUntil: 'networkidle0' });
   await page.evaluate(() => document.querySelector('astro-dev-toolbar')?.remove());
   await new Promise((r) => setTimeout(r, 1200)); // fonts, images and entrance animations
-  await page.screenshot({ path: `public/screens/${s.file}.webp`, type: 'webp', quality: 88 });
+  await page.screenshot({ path: `public/screens/${s.file}.webp`, type: 'webp', quality: 75 });
   console.log(`public/screens/${s.file}.webp`);
 }
 await browser.close();

@@ -1,4 +1,5 @@
 ---
+import '../styles/fonts.css';
 // The tablet in the campfire scene shows this page: a small desktop with Work (every project, each with a working
 // demo) and Contact. It also works on its own at /tablet.
 import { brand, founder } from '../config/site';
@@ -12,9 +13,6 @@ const owner = { name: founder.name, role: founder.role, initials: founder.initia
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
     <title>Work | {founder.name}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body>
     <main id="desk" data-owner={JSON.stringify(owner)}></main>

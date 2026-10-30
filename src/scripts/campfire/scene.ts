@@ -40,7 +40,7 @@ export function mountCampfire(
   onZoom: (zoomedIn: boolean) => void,
 ) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, stencil: true }); // the stencil keeps outlines to the edges
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, matchMedia('(pointer: coarse)').matches ? 1.5 : 2)); // phones: fewer pixels, cooler battery
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
   const scene = new THREE.Scene();
@@ -76,7 +76,8 @@ export function mountCampfire(
   // Pages on the laptop and the tablet. From the scene, each screen shows a still picture of its page (mipmapped, so it
   // stays crisp when small). Flying onto a screen swaps in the live page: an iframe laid out at a desktop size and
   // pinned onto the glass in 3D, which then takes the pointer and keyboard. Leaving reloads it, so it matches the
-  // picture again. The HTML layer sits behind the canvas and each glass is drawn as a see-through hole, so anything
+  // picture again. A page isn't loaded at all until its screen is hovered or flown to, so opening the scene only
+  // fetches the pictures; the picture stays up until the page has loaded. The HTML layer sits behind the canvas and each glass is drawn as a see-through hole, so anything
   // standing in front of a screen (the printer, seen from the left) still covers it; once the camera has arrived, the
   // HTML layer comes to the front.
   // The HTML layer works in millimetres (K): at metre scale Chrome hit-tests a tilted page in the wrong place, so
@@ -89,8 +90,11 @@ export function mountCampfire(
   const hole = new THREE.MeshBasicMaterial({ color: '#000000', opacity: 0, blending: THREE.NoBlending });
   const stills = new THREE.TextureLoader();
   type Screen = {
-    obj: THREE.Object3D; glass: THREE.Mesh; frame: HTMLIFrameElement; holder: THREE.Object3D; still: THREE.Mesh; ready: boolean;
-    used: boolean; size: THREE.Vector2; out: THREE.Vector3; up: THREE.Vector3;
+    obj: THREE.Object3D; glass: THREE.Mesh; frame: HTMLIFrameElement; url: string; holder: THREE.Object3D; still: THREE.Mesh; ready: boolean;
+    loaded: boolean; used: boolean; size: THREE.Vector2; out: THREE.Vector3; up: THREE.Vector3;
+  };
+  const loadPage = (s: Screen) => {
+    if (!s.frame.getAttribute('src')) s.frame.src = s.url;
   };
   // flat: the glass lies in its x-z plane facing -y (the laptop's lid); otherwise it stands in its x-y plane facing +z.
   // radius: the glass's corner radius in metres (0 for square corners). sheen: lay a pane of glass over the page (a soft
@@ -104,8 +108,7 @@ export function mountCampfire(
     const box = glass.geometry.boundingBox!.getSize(new THREE.Vector3());
     const size = new THREE.Vector2(box.x, flat ? box.z : box.y);
     const pageH = Math.round((pageW * size.y) / size.x);
-    const frame = document.createElement('iframe');
-    frame.src = url;
+    const frame = document.createElement('iframe'); // src is set by loadPage
     frame.title = title;
     Object.assign(frame.style, {
       width: `${pageW}px`, height: `${pageH}px`, border: '0', background: '#07080a', pointerEvents: 'none', borderRadius: `${(radius * pageW) / size.x}px`,
@@ -113,6 +116,8 @@ export function mountCampfire(
     frame.tabIndex = -1;
     frame.inert = true;
     frame.addEventListener('load', () => {
+      if (!frame.getAttribute('src')) return; // the empty page an iframe starts with
+      s.loaded = true;
       const win = frame.contentWindow!;
       // Chrome doesn't scroll a page inside a 3D-transformed iframe on the wheel by itself, so scroll the nearest
       // scrollable box under the pointer here (or the page)
@@ -165,7 +170,7 @@ export function mountCampfire(
       glass.add(glow);
     }
     const s: Screen = {
-      obj: scene.getObjectByName(objName)!, glass, frame, holder, still, ready: false, used: false, size,
+      obj: scene.getObjectByName(objName)!, glass, frame, url, holder, still, ready: false, loaded: false, used: false, size,
       out: flat ? new THREE.Vector3(0, -1, 0) : new THREE.Vector3(0, 0, 1),
       up: flat ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(0, 1, 0),
     };
@@ -234,7 +239,10 @@ export function mountCampfire(
   };
   const setFocus = (on: boolean, s = target) => {
     if (on === !!focusWant) return;
-    if (on) target = s;
+    if (on) {
+      target = s;
+      loadPage(s);
+    }
     focusWant = on ? 1 : 0;
     if (!on) {
       const { frame } = target;
@@ -474,7 +482,7 @@ export function mountCampfire(
       camera.quaternion.slerpQuaternions(sceneQuat, focusQuat, f);
     }
     // Once the camera has arrived, the page takes the pointer and keyboard.
-    if (focusNow === 1 && target.frame.inert) {
+    if (focusNow === 1 && target.loaded && target.frame.inert) {
       const { frame } = target;
       css.domElement.style.zIndex = '1';
       target.used = true;
@@ -487,7 +495,8 @@ export function mountCampfire(
     // Live page only on the screen being flown to; the rest show their pictures. A page that was used is reloaded once
     // the camera is back, so it matches its picture again.
     for (const s of screens) {
-      const live = s === target && focusNow > 0.5;
+      if (s.obj === hovered) loadPage(s); // a head start before the click
+      const live = s === target && focusNow > 0.5 && s.loaded;
       s.still.visible = s.ready && !live;
       s.frame.style.visibility = focusNow > 0 && s !== target ? 'hidden' : '';
       if (focusNow === 0 && s.used) {
