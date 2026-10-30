@@ -169,10 +169,10 @@ export const cardFace = () =>
       for (const log of MARK.logs) g.stroke(new Path2D(log));
       g.restore();
       g.fillStyle = '#f2f2f2';
-      g.font = '600 40px Inter, system-ui, sans-serif';
+      g.font = '600 40px system-ui, sans-serif';
       g.fillText('Saleng Works', 40, 224);
       g.fillStyle = '#9aa0a6';
-      g.font = '400 22px Inter, system-ui, sans-serif';
+      g.font = '400 22px system-ui, sans-serif';
       g.fillText('Wayne V. Banase', 40, 262);
       g.fillStyle = '#3ecf8e';
       g.fillRect(0, 310, 512, 10);
@@ -193,7 +193,7 @@ export const wordmark = () =>
   once('wordmark', () =>
     make(512, 96, (g) => {
       g.fillStyle = '#8b8f96';
-      g.font = '600 44px Inter, system-ui, sans-serif';
+      g.font = '600 44px system-ui, sans-serif';
       g.textAlign = 'center';
       g.fillText('Saleng Works', 256, 62);
     }),

@@ -3,6 +3,7 @@
 // Anything that moves registers a tick in userData.ticks; the scene calls them every frame.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import * as T from './textures';
 
 export type Tick = (t: number) => void;
@@ -168,6 +169,43 @@ function group(name: string, ...children: THREE.Object3D[]) {
   g.name = name;
   if (children.length) g.add(...children);
   return g;
+}
+/** Bakes the still meshes under root into one mesh per material, so a scenery piece made of many parts costs a few
+ *  draw calls instead of one per part. Leaves alone anything under skip, anything that moves or reacts (ticks, hover,
+ *  click), named parts the scene looks up, instanced meshes and mirrored parts. Call it once the piece is built. */
+function mergeStill(root: THREE.Object3D, skip: (o: THREE.Object3D) => boolean = () => false) {
+  root.updateMatrixWorld(true);
+  const toRoot = root.matrixWorld.clone().invert();
+  const lively = (o: THREE.Object3D) => o.userData.ticks || o.userData.hover || o.userData.play;
+  const byMat = new Map<THREE.Material, THREE.Mesh[]>();
+  const walk = (o: THREE.Object3D) => {
+    for (const c of o.children) {
+      if (skip(c) || lively(c)) continue;
+      const m = c as THREE.Mesh;
+      if (m.isMesh && !(m as THREE.InstancedMesh).isInstancedMesh && !Array.isArray(m.material) && !m.name && m.children.length === 0 && m.matrixWorld.determinant() > 0) {
+        const list = byMat.get(m.material) ?? [];
+        list.push(m);
+        byMat.set(m.material, list);
+      } else walk(c);
+    }
+  };
+  walk(root);
+  const keep = ['position', 'normal', 'uv'];
+  for (const [mat, meshes] of byMat) {
+    if (meshes.length < 2) continue;
+    const geos = meshes.map((m) => {
+      let g = m.geometry.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(toRoot, m.matrixWorld));
+      for (const a of Object.keys(g.attributes)) if (!keep.includes(a)) g.deleteAttribute(a);
+      if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+      g.clearGroups();
+      return g;
+    });
+    const indexed = geos.every((g) => g.index);
+    const merged = mergeGeometries(indexed ? geos : geos.map((g) => (g.index ? g.toNonIndexed() : g)));
+    if (!merged) continue;
+    for (const m of meshes) m.removeFromParent();
+    root.add(new THREE.Mesh(merged, mat));
+  }
 }
 /** Flat sticker (label, grille) facing +z. */
 function decal(w: number, h: number, m: THREE.Material) {
@@ -358,6 +396,7 @@ export function kiosk() {
   front(rboxC(W - 0.2, 0.01, 0.006, 0.003, M.bezel), 0, 0.32, 0.004);
   front(decal(0.26, 0.05, M.grille), 0, 0.21, 0.001);
   front(decal(0.16, 0.03, M.label), 0, 0.11, 0.001);
+  mergeStill(g);
   return g;
 }
 
@@ -915,6 +954,7 @@ export function desk() {
     o.userData.label = label; // ...and shows this beside it
     g.add(o);
   }
+  mergeStill(g); // the desk itself; the things on it are left whole, since each lifts and outlines on its own
   return g;
 }
 
@@ -996,6 +1036,8 @@ function pineTree(size: number) {
     canopy.rotation.x = Math.sin(t * 0.45 + 1) * 0.005;
   });
   tree.add(canopy);
+  mergeStill(canopy); // the pads' cores and candles sway with the canopy, so they're baked into it
+  mergeStill(tree, (o) => o === canopy); // trunk, roots and branches
   return tree;
 }
 
@@ -1107,5 +1149,6 @@ export function fireGarden() {
   const f = fire();
   f.scale.setScalar(0.6); // a small cooking fire, not a bonfire, for the size of the ring
   g.add(f);
+  mergeStill(g, (o) => o === f || o === tree); // gravel base, rocks, moss and shrub cores
   return g;
 }
