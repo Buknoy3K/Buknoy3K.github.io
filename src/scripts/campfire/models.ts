@@ -17,6 +17,25 @@ const phys = (color: string, extra: THREE.MeshPhysicalMaterialParameters = {}) =
 const glow = (color: string, opacity: number) =>
   new THREE.MeshBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false });
 
+/** Gives o something to do when it's clicked, lasting secs: o.userData.play() starts it (unless it's already going),
+ *  and run(p, t) is called every frame meanwhile with p rising from 0 to 1, ending on exactly 1 so it can settle. */
+function action(o: THREE.Object3D, secs: number, run: (p: number, t: number) => void) {
+  let start = -1, last = 0;
+  onTick(o, (t) => {
+    last = t;
+    if (start < 0) return;
+    const p = Math.min(1, (t - start) / secs);
+    run(p, t);
+    if (p === 1) start = -1;
+  });
+  o.userData.play = () => {
+    if (start < 0) start = last;
+  };
+}
+const ease = THREE.MathUtils.smoothstep;
+/** Rises from 0 to 1 over p = 0..a, holds, and falls back to 0 over p = b..1. */
+const swell = (p: number, a: number, b: number) => ease(p, 0, a) * (1 - ease(p, b, 1));
+
 const M = {
   shell: phys('#efefeb', { roughness: 0.3, clearcoat: 0.5, clearcoatRoughness: 0.25 }),
   shellBack: std('#c9cac6', { roughness: 0.45 }),
@@ -47,7 +66,6 @@ const M = {
   pebble: std('#a39c90', { roughness: 0.8 }),
   succ: phys('#7fae86', { roughness: 0.45, clearcoat: 0.3, clearcoatRoughness: 0.5 }),
   succYoung: phys('#a9c9a0', { roughness: 0.45, clearcoat: 0.3 }),
-  succTip: std('#a88a7a', { roughness: 0.6 }),
   figWhite: std('#f4f2ee', { roughness: 0.4 }),
   can: std('#7b9dc4', { roughness: 0.38, metalness: 0.35, side: THREE.DoubleSide }),
   brass: std('#b08d4f', { roughness: 0.3, metalness: 0.9 }),
@@ -56,7 +74,8 @@ const M = {
   figSkin: std('#f1c8a0', { roughness: 0.55 }),
   figGi: std('#f07a1c', { roughness: 0.5 }),
   figBlue: std('#1f4fa8', { roughness: 0.5 }),
-  figHair: std('#121214', { roughness: 0.45 }),
+  figHair: std('#121214', { roughness: 0.45, name: 'figHair' }), // named, so Super Saiyan mode finds it after the scene copies it
+  figEye: std('#121214', { roughness: 0.3, name: 'figEye' }),
   lampGlow: new THREE.MeshBasicMaterial({ color: '#ffd9a8' }),
   walnut: std('#ffffff', { map: T.wood('#6b4630', '#3d2617'), roughness: 0.45 }),
   pineBark: std('#a39486', { map: T.bark(), roughness: 0.95 }),
@@ -165,10 +184,14 @@ const flameGeo = new THREE.LatheGeometry(
   20,
 );
 
-/** The campfire itself: a low tepee of logs on glowing coals over an ash bed, with flames, sparks and smoke. */
+/** The campfire itself: a low tepee of logs on glowing coals over an ash bed, with flames, sparks and smoke. Clicked,
+ *  it roars up for a few seconds with a shower of sparks: userData.heat (0..1) says how hard, for the scene's flames
+ *  and firelight. */
 function fire() {
   const g = group('fire');
   T.reseed(11);
+  let heat = 0;
+  g.userData.heat = 0;
   g.add(at(cyl(0.28, 0.32, 0.012, M.ash, 32), 0, 0, 0));
 
   // Logs leaning into a low, wide tepee, with cut ends
@@ -189,8 +212,8 @@ function fire() {
     g.add(coal);
   }
   onTick(g, (t) => {
-    M.ember.emissiveIntensity = 1.4 + Math.sin(t * 2.3) * 0.35 + Math.sin(t * 5.1) * 0.15;
-    M.ember2.emissiveIntensity = 1.1 + Math.sin(t * 1.7 + 1) * 0.3;
+    M.ember.emissiveIntensity = (1.4 + Math.sin(t * 2.3) * 0.35 + Math.sin(t * 5.1) * 0.15) * (1 + heat);
+    M.ember2.emissiveIntensity = (1.1 + Math.sin(t * 1.7 + 1) * 0.3) * (1 + heat);
   });
 
   // Flames: a low, wide fire of layered tongues, outer red to white core, each flickering on its own rhythm
@@ -263,6 +286,43 @@ function fire() {
     });
   }
   g.add(smoke);
+
+  // Roaring up: the heat swells and flickers, and a shower of big sparks bursts out, heaviest at first. Each spark
+  // flies once, from its own moment, up and out, slowing as it rises and fading as it cools.
+  const BURST = 7, B = 170;
+  const burstPos = new Float32Array(B * 3), burstCol = new Float32Array(B * 3);
+  const burst = Array.from({ length: B }, () => {
+    const a = T.rand() * Math.PI * 2, out = 0.12 + T.rand() * 0.45;
+    return { at: Math.pow(T.rand(), 2) * 4.5, life: 0.9 + T.rand() * 0.9, vx: Math.cos(a) * out, vz: Math.sin(a) * out, vy: 1 + T.rand() * 1.3, ph: T.rand() * 6 };
+  });
+  const burstGeo = new THREE.BufferGeometry();
+  burstGeo.setAttribute('position', new THREE.BufferAttribute(burstPos, 3));
+  burstGeo.setAttribute('color', new THREE.BufferAttribute(burstCol, 3));
+  const burstPts = new THREE.Points(
+    burstGeo,
+    new THREE.PointsMaterial({ size: 0.075, map: T.soft(), vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
+  );
+  burstPts.frustumCulled = false;
+  g.add(burstPts);
+  action(g, BURST, (p, t) => {
+    heat = swell(p, 0.06, 0.55) * (0.9 + Math.sin(t * 17) * 0.06 + Math.sin(t * 7.3) * 0.04);
+    g.userData.heat = heat;
+    const e = p * BURST;
+    burst.forEach((s, i) => {
+      const a = e - s.at, l = a / s.life;
+      const b = p < 1 && l > 0 && l < 1 ? 2.4 * (1 - l) : 0;
+      burstPos[i * 3] = s.vx * a + Math.sin(a * 9 + s.ph) * 0.03;
+      burstPos[i * 3 + 1] = 0.2 + s.vy * a - 0.35 * a * a;
+      burstPos[i * 3 + 2] = s.vz * a + Math.cos(a * 8 + s.ph) * 0.03;
+      burstCol[i * 3] = b;
+      burstCol[i * 3 + 1] = b * 0.5;
+      burstCol[i * 3 + 2] = b * 0.12;
+    });
+    burstGeo.attributes.position.needsUpdate = true;
+    burstGeo.attributes.color.needsUpdate = true;
+  });
+  g.userData.hover = true; // the scene makes it flare up under the mouse
+  g.userData.label = 'Stoke the fire';
   return g;
 }
 
@@ -427,6 +487,12 @@ function printer() {
   receipt.name = 'receipt';
   receipt.position.set(0, h1, slotZ);
   g.add(receipt);
+  // Printing: the box hums and the receipt feeds out longer, then it's torn off and back to its stub
+  action(g, 1.1, (p, t) => {
+    g.position.x = p < 1 ? Math.sin(t * 90) * 0.0007 : 0;
+    const feed = p < 1 ? 1 + ease(p, 0, 0.9) * 0.9 : 1;
+    receipt.scale.set(1, feed, feed);
+  });
   return g;
 }
 
@@ -495,6 +561,7 @@ function wateringCan() {
   g.add(at(cyl(0.02, 0.02, 0.014, M.can, 32), -0.035, 0.108, 0)); // filler neck
   g.add(tube([[0.055, 0.03, 0], [0.1, 0.075, 0], [0.135, 0.118, 0]], 0.007, M.can));
   const rose = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.008, 0.02, 16), M.can);
+  rose.name = 'rose';
   rose.position.set(0.141, 0.126, 0);
   rose.rotation.z = -0.75;
   g.add(rose);
@@ -502,10 +569,11 @@ function wateringCan() {
   return g;
 }
 
-const succLeafGeo = new THREE.SphereGeometry(1, 14, 10);
+// A pointed leaf blade: a flattened cone lying along +z from its base (z = 0) to its tip (z = 1)
+const succLeafGeo = new THREE.ConeGeometry(1, 1, 8, 1).rotateX(Math.PI / 2).translate(0, 0, 0.5);
 
-/** Small echeveria succulent: a tight rosette of plump, rounded, blue-green leaves with blushed tips, in a little round
- *  white planter. Rounded leaves, not spiky ones, per feng shui. */
+/** Small spiky succulent (an agave-like rosette): stiff, narrow blue-green blades tapering to sharp points, standing up
+ *  in the middle and fanning out round the edge, in a little round white planter. */
 function succulent() {
   const g = group('succulent');
   T.reseed(41);
@@ -513,26 +581,73 @@ function succulent() {
   g.add(planter(0.045, h, M.whitePot));
   const rosette = group('rosette');
   rosette.position.y = h - 0.006;
-  // Leaves spiral out from the centre (golden angle): small and upright inside, longer and flatter outside
-  const n = 34;
+  // Blades spiral out from the centre (golden angle): short and upright inside, longer and more open outside
+  const n = 40;
   for (let i = 0; i < n; i++) {
     const t = i / (n - 1), az = i * 2.4;
-    const len = 0.012 + t * 0.024, wid = 0.008 + t * 0.011;
-    const leaf = new THREE.Mesh(succLeafGeo, i < 6 ? M.succYoung : M.succ);
-    leaf.scale.set(wid, 0.006 + t * 0.002, len);
-    leaf.position.z = len * 0.85;
+    const len = 0.032 + t * 0.05, wid = 0.008 + t * 0.008;
+    const leaf = new THREE.Mesh(succLeafGeo, i < 7 ? M.succYoung : M.succ);
+    leaf.scale.set(wid, 0.0065, len); // thick, fleshy blades
     const pivot = group('leaf', leaf);
     pivot.rotation.order = 'YXZ';
     pivot.rotation.y = az;
-    pivot.rotation.x = -(1.3 - t * 0.8) + (T.rand() - 0.5) * 0.12; // inner leaves stand up, outer ones open out
-    pivot.position.y = 0.006 + (1 - t) * 0.01;
+    pivot.rotation.x = -(1.4 - t * 0.85) + (T.rand() - 0.5) * 0.15; // inner blades stand up, outer ones open out
+    pivot.position.y = 0.004 + (1 - t) * 0.008;
     rosette.add(pivot);
-    const tip = new THREE.Mesh(new THREE.SphereGeometry(wid * 0.22, 8, 6), M.succTip);
-    tip.position.z = len * 1.75;
-    tip.scale.y = 0.5;
-    pivot.add(tip);
   }
   g.add(rosette);
+  return g;
+}
+
+/** The succulent with its watering can standing beside the pot, spout toward it. Clicked, the can lifts, tips its
+ *  spout over the plant and sprinkles it, then sets itself back down; the plant gives a little perk after. */
+function plantSet() {
+  const g = group('plantSet');
+  const plant = big(succulent(), 1.1), rosette = plant.getObjectByName('rosette')!;
+  const can = turn(at(big(wateringCan(), 0.6), 0.13, 0, -0.02), Math.PI + 0.3), rose = can.getObjectByName('rose')!;
+  g.add(plant, can);
+  // Pouring pose: tipped forward by TIP, placed so the rose hangs just over the middle of the plant
+  const TIP = 0.6, home = can.position.clone();
+  const pour = new THREE.Vector3(0.04, 0.165, -0.01).sub(
+    rose.position.clone().applyEuler(new THREE.Euler(0, Math.PI + 0.3, -TIP)).multiplyScalar(can.scale.x),
+  );
+  // Drops: each leaves the rose at its own moment while the can is tipped, and arcs out over the plant as it falls
+  const N = 260, POUR = [0.3, 0.72], SECS = 5.5;
+  const dropPos = new Float32Array(N * 3), drops = Array.from({ length: N }, (_, i) => ({
+    at: (POUR[0] + ((POUR[1] - POUR[0]) * i) / N) * SECS, vx: (Math.random() - 0.5) * 0.1, vz: (Math.random() - 0.5) * 0.1,
+  }));
+  const dropGeo = new THREE.BufferGeometry();
+  dropGeo.setAttribute('position', new THREE.BufferAttribute(dropPos, 3));
+  const water = new THREE.Points(
+    dropGeo,
+    new THREE.PointsMaterial({ size: 0.012, map: T.soft(), color: '#d6eeff', transparent: true, depthWrite: false }),
+  );
+  water.frustumCulled = false;
+  water.visible = false;
+  g.add(water);
+  const from = new THREE.Vector3();
+  action(g, SECS, (p) => {
+    const there = swell(p, 0.25, 0.8), tip = swell(p, 0.32, 0.72) * ease(p, 0.2, 0.32);
+    can.position.lerpVectors(home, pour, there);
+    can.position.y += Math.sin(there * Math.PI) * 0.03; // a little arc on the way
+    can.rotation.z = -TIP * tip;
+    // The rose's place in this group, from where the can is now
+    can.updateMatrix();
+    from.copy(rose.position).applyMatrix4(can.matrix);
+    water.visible = p < 1;
+    const e = p * SECS;
+    drops.forEach((d, i) => {
+      const a = e - d.at, y = from.y - 0.05 * a - 1.2 * a * a;
+      const live = a > 0 && y > 0.07;
+      dropPos[i * 3] = live ? from.x + (d.vx - 0.22) * a : 0;
+      dropPos[i * 3 + 1] = live ? y : -1;
+      dropPos[i * 3 + 2] = live ? from.z + (d.vz + 0.05) * a : 0;
+    });
+    dropGeo.attributes.position.needsUpdate = true;
+    // The plant perks up a little once it's watered
+    const perk = ease(p, 0.6, 0.7) * (1 - ease(p, 0.7, 1));
+    rosette.scale.set(1, 1 + perk * 0.08, 1);
+  });
   return g;
 }
 
@@ -633,7 +748,7 @@ function figurine() {
   for (const s of [-1, 1]) {
     ball(0.0035, M.figSkin, s * 0.0128, hy, -0.001, 0.5, 1, 0.8); // ear
     ball(0.0026, M.figWhite, s * 0.0052, hy + 0.0012, 0.0118, 1.3, 0.8, 0.5); // eye white
-    ball(0.0013, M.figHair, s * 0.0049, hy + 0.0012, 0.0128); // pupil
+    ball(0.0013, M.figEye, s * 0.0049, hy + 0.0012, 0.0128); // pupil
     const brow = at(rboxC(0.0068, 0.0013, 0.0015, 0.0006, M.figHair), s * 0.0052, hy + 0.0052, 0.0122);
     brow.rotation.z = s * -0.3;
     g.add(brow);
@@ -642,12 +757,15 @@ function figurine() {
   nose.position.set(0, hy - 0.002, 0.0138);
   g.add(nose);
 
-  // Hair: a cap over the crown, big spikes swept up, back and out, and bangs falling over the forehead
+  // Hair, centred on the head: a cap over the crown, big spikes swept up, back and out, and bangs over the forehead
+  const hair = group('hair');
+  hair.position.y = hy;
+  g.add(hair);
   const cap = new THREE.Mesh(new THREE.SphereGeometry(0.0146, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.5), M.figHair);
-  cap.position.set(0, hy + 0.006, 0.0003);
+  cap.position.set(0, 0.006, 0.0003);
   cap.scale.set(0.97, 1.2, 1.03);
-  g.add(cap);
-  ball(0.0135, M.figHair, 0, hy + 0.001, -0.004, 0.95, 1.05, 0.9); // back of the head
+  hair.add(cap);
+  hair.add(at(ball(0.0135, M.figHair, 0, 0, 0, 0.95, 1.05, 0.9), 0, 0.001, -0.004)); // back of the head
   const up = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3();
   // [direction x, y, z, length, base radius]
   const spikes: [number, number, number, number, number][] = [
@@ -661,9 +779,70 @@ function figurine() {
     const spike = new THREE.Mesh(new THREE.ConeGeometry(r * 1.45, l * 1.1, 10), M.figHair);
     spike.quaternion.setFromUnitVectors(up, dir);
     const bang = z > 0.5;
-    spike.position.set(0, hy + (bang ? 0.008 : 0.004), 0).addScaledVector(dir, (bang ? 0.012 : 0.01) + l / 2);
-    g.add(spike);
+    spike.position.set(0, bang ? 0.008 : 0.004, 0).addScaledVector(dir, (bang ? 0.012 : 0.01) + l / 2);
+    hair.add(spike);
   }
+
+  // Super Saiyan mode: the hair (and brows) flare gold and stand up taller, the eyes turn teal, and a golden aura of
+  // flickering flame tongues wraps the figure, lighting the desk round it, with motes rising through it.
+  const aura = group('aura');
+  aura.visible = false;
+  const tongues: { f: THREE.Mesh; R: number; H: number; ph: number; sp: number }[] = [];
+  for (const [color, op, n, R, H, ring] of [['#ffa51f', 0.075, 9, 0.036, 0.25, 0.032], ['#ffe27a', 0.05, 5, 0.026, 0.21, 0.02]] as const) {
+    const m = glow(color, op);
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2, f = new THREE.Mesh(flameGeo, m);
+      f.position.set(Math.cos(a) * ring, -0.004, Math.sin(a) * ring * 0.7);
+      f.scale.setScalar(0);
+      aura.add(f);
+      tongues.push({ f, R, H: H * (0.85 + Math.random() * 0.3), ph: Math.random() * 10, sp: 6 + Math.random() * 5 });
+    }
+  }
+  g.add(aura);
+  const MOTES = 30, motePos = new Float32Array(MOTES * 3);
+  const moteGeo = new THREE.BufferGeometry();
+  moteGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
+  const motes = new THREE.Points(
+    moteGeo,
+    new THREE.PointsMaterial({ size: 0.006, map: T.soft(), color: '#ffe48a', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
+  );
+  motes.frustumCulled = false;
+  aura.add(motes);
+  const ki = new THREE.PointLight('#ffc23a', 0, 0.9, 1.4);
+  ki.position.set(0, 0.11, 0.05);
+  g.add(ki);
+  const black = new THREE.Color('#121214'), gold = new THREE.Color('#ffd84a'), teal = new THREE.Color('#19b3a0');
+  let hairMats: THREE.MeshStandardMaterial[] = [], eyeMats: THREE.MeshStandardMaterial[] = [];
+  action(g, 7, (p, t) => {
+    if (!hairMats.length) {
+      // The scene gives each hoverable thing its own copies of its materials, so look them up by name here
+      const found = new Set<THREE.MeshStandardMaterial>();
+      g.traverse((o) => (o as THREE.Mesh).isMesh && found.add((o as THREE.Mesh).material as THREE.MeshStandardMaterial));
+      hairMats = [...found].filter((m) => m.name === 'figHair');
+      eyeMats = [...found].filter((m) => m.name === 'figEye');
+    }
+    // Powering up flickers on and off before it holds
+    const lv = swell(p, 0.12, 0.85) * (p < 0.12 ? 0.55 + 0.45 * Math.sign(Math.sin(t * 40)) : 1);
+    for (const m of hairMats) {
+      m.color.lerpColors(black, gold, lv);
+      m.emissive.copy(gold).multiplyScalar(lv * 0.45);
+    }
+    for (const m of eyeMats) m.color.lerpColors(black, teal, lv);
+    hair.scale.set(1 + lv * 0.08, 1 + lv * 0.2, 1 + lv * 0.08);
+    aura.visible = lv > 0.01;
+    ki.intensity = lv * 0.3;
+    for (const { f, R, H, ph, sp } of tongues) {
+      const s = Math.sin(t * sp + ph) * 0.15 + Math.sin(t * 15 + ph * 2) * 0.07;
+      f.scale.set(R * lv * (1 - s * 0.3), H * lv * (1 + s), R * lv * (1 - s * 0.3));
+    }
+    for (let i = 0; i < MOTES; i++) {
+      const l = (t * 0.6 + i / MOTES) % 1, a = i * 2.4;
+      motePos[i * 3] = Math.cos(a) * (0.02 + (i % 3) * 0.008);
+      motePos[i * 3 + 1] = l * 0.24 * lv;
+      motePos[i * 3 + 2] = Math.sin(a) * (0.016 + (i % 3) * 0.006);
+    }
+    moteGeo.attributes.position.needsUpdate = true;
+  });
   return g;
 }
 
@@ -675,6 +854,7 @@ function paper() {
 }
 
 const big = <O extends THREE.Object3D>(o: O, s: number) => (o.scale.setScalar(s), o);
+const turn = <O extends THREE.Object3D>(o: O, ry: number) => ((o.rotation.y = ry), o);
 
 /** The desk: a wide pale birch top with softly rounded corners on four slim white metal legs. On top, two tidy rows
  *  on five evenly spaced columns. Back: a figurine behind the printer, the tablet, the laptop, the phone and the green banker's lamp. Front: the printer standing
@@ -712,25 +892,27 @@ export function desk() {
     g.add(at(rbox(0.02, 0.05, inZ * 2, 0.004, M.legs), s * inX, legH - 0.05, 0));
   }
 
-  // Things on the desk: [object, x, z, turn], in two rows on the same five columns
+  // Things on the desk: [object, x, z, turn, what clicking it does], in two rows on the same five columns
   const S = 1.3, col = [-0.66, -0.37, 0, 0.37, 0.66], back = -0.17, front = 0.22;
-  const things: [THREE.Object3D, number, number, number][] = [
-    [big(figurine(), 1.1), col[0] - 0.04, back - 0.08, 0.2],
-    [paper(), col[0], front - 0.05, 0.05],
-    [big(printer(), 1.0), col[0], front - 0.09, 0.05], // standing on the paper, which sticks out in front of it
-    [big(tablet(), S), col[1] - 0.07, back + 0.05, 0.2],
-    [big(laptop(), S), col[2], back + 0.05, 0],
-    [big(phone(), S), col[3] + 0.04, back - 0.02, -0.15],
-    [big(lamp(), 1.1), col[4], back - 0.06, -0.25],
-    [big(cardStand(), 1.4), col[1], front, 0],
-    [big(mug(), S), col[2], front, -0.9],
-    [big(diary(), S), col[3] - 0.02, front - 0.03, -0.08],
-    [big(succulent(), 1.1), col[4] - 0.06, front, 0],
-    [big(wateringCan(), 0.6), col[4] + 0.06, front - 0.25, Math.PI + 0.25],
+  const pr = printer(), printerSet = group('printerSet', paper(), at(pr, 0, 0, -0.04)); // the printer stands on the paper, which sticks out in front of it
+  printerSet.userData.play = pr.userData.play;
+  const things: [THREE.Object3D, number, number, number, string][] = [
+    [big(figurine(), 1.1), col[0] - 0.04, back - 0.08, 0.2, 'Go Super Saiyan'],
+    [printerSet, col[0], front - 0.05, 0.05, 'Print a quote'],
+    [big(tablet(), S), col[1] - 0.07, back + 0.05, 0.2, 'See my work'],
+    [big(laptop(), S), col[2], back + 0.05, 0, 'Browse the website'],
+    [big(phone(), S), col[3] + 0.04, back - 0.02, -0.15, 'Open my apps'],
+    [big(lamp(), 1.1), col[4], back - 0.06, -0.25, 'Switch on the lamp'],
+    [big(cardStand(), 1.4), col[1], front, 0, 'Take my card'],
+    [big(mug(), S), col[2], front, -0.9, 'Take a sip'],
+    [big(diary(), S), col[3] - 0.02, front - 0.03, -0.08, 'Read what clients say'],
+    [plantSet(), col[4] - 0.06, front, 0, 'Water the plant'],
   ];
-  for (const [o, x, z, ry] of things) {
+  for (const [o, x, z, ry, label] of things) {
     o.position.set(x, top, z);
     o.rotation.y = ry;
+    o.userData.hover = true; // the scene lifts it a little under the mouse
+    o.userData.label = label; // ...and shows this beside it
     g.add(o);
   }
   return g;

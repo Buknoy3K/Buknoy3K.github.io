@@ -147,18 +147,27 @@ export const receipt = () =>
   );
 
 /** Business card front. */
+/** The Saleng Labs campfire mark's outlines (in its 512 box): a flame with a hollow core, and two crossed logs. */
+const MARK = {
+  flame: 'M262 76c22 58 92 104 92 190c0 58-42 98-98 98s-98-40-98-96c0-40 20-70 46-90c-2 30 10 52 32 62c-16-54 0-112 26-164zM256 230c-22 32-40 52-40 82c0 22 18 38 40 38s40-16 40-38c0-30-18-50-40-82z',
+  logs: ['M146 432L366 378', 'M146 378L366 432'],
+};
+
 export const cardFace = () =>
   once('card', () =>
     make(512, 320, (g) => {
       g.fillStyle = '#17191c';
       g.fillRect(0, 0, 512, 320);
-      g.fillStyle = '#3ecf8e';
-      g.beginPath();
-      g.roundRect(40, 40, 44, 44, 10);
-      g.fill();
-      g.fillStyle = '#0e2a1d';
-      g.font = '700 30px Inter, system-ui, sans-serif';
-      g.fillText('S', 52, 73);
+      // The campfire mark, as in public/brand/saleng-labs-mark.svg (its 512 box drawn 80 px tall)
+      g.save();
+      g.translate(18, 22);
+      g.scale(80 / 512, 80 / 512);
+      g.fillStyle = g.strokeStyle = '#3ecf8e';
+      g.fill(new Path2D(MARK.flame), 'evenodd');
+      g.lineWidth = 28;
+      g.lineCap = 'round';
+      for (const log of MARK.logs) g.stroke(new Path2D(log));
+      g.restore();
       g.fillStyle = '#f2f2f2';
       g.font = '600 40px Inter, system-ui, sans-serif';
       g.fillText('Saleng Labs', 40, 224);

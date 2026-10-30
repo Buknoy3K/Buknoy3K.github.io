@@ -1,0 +1,256 @@
+---
+// Overlays the campfire opens over the scene when a thing on the desk is clicked: the calling card (from the card
+// stand), a printed quote (from the receipt printer) and the testimonial notebook (from the diary). Each grows out of
+// where its thing is on screen; src/scripts/campfire/sheets.ts opens, closes and pages them.
+import { brand, founder, testimonials } from '../../config/site';
+import { ph } from '../../lib/ph';
+
+const tel = `tel:+63${brand.phone.replace(/\D/g, '').replace(/^0/, '')}`;
+const initials = (name: string) => name.replace(/[^\p{L}\s]/gu, '').split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+
+// The notebook, page by page: the cover, then the pages as you'd see them in turn (left, right, left...), then the
+// back cover. Leaf k is pages 2k (its front) and 2k+1 (its back), so a blank page goes before the back cover if needed.
+type Page = { kind: 'cover' | 'inside' | 'quote' | 'end' | 'blank' | 'backcover'; t?: (typeof testimonials)[number] };
+const pages: Page[] = [{ kind: 'cover' }, { kind: 'inside' }, ...testimonials.map((t) => ({ kind: 'quote' as const, t })), { kind: 'end' }];
+if (pages.length % 2 === 0) pages.push({ kind: 'blank' });
+pages.push({ kind: 'backcover' });
+const leaves = Array.from({ length: pages.length / 2 }, (_, k) => [pages[2 * k], pages[2 * k + 1]] as const);
+---
+
+<div class="sheet" data-sheet="card" hidden>
+  <div class="scrim" data-close></div>
+  <div class="panel">
+    <button type="button" class="callcard" aria-label="Calling card (click to turn it over)">
+      <span class="side obverse">
+        <img src="/brand/saleng-labs-mark.svg" alt="" class="mark" width="64" height="64" />
+        <span class="brandname">{brand.name}</span>
+        <span class="tagline">{brand.tagline}</span>
+        <span class="who"><b>{founder.name}</b><span>{founder.role}</span></span>
+        <span class="contact">
+          <span>{brand.phone}</span>
+          <span>{brand.email}</span>
+          <span>{brand.location}</span>
+        </span>
+      </span>
+      <span class="side reverse">
+        <img src="/brand/saleng-labs-mark.svg" alt="" width="120" height="120" />
+        <span class="brandname">{brand.name}</span>
+      </span>
+    </button>
+    <p class="actions">
+      <a href={tel}>Call</a>
+      <a href={`mailto:${brand.email}`}>Email</a>
+      <button type="button" data-close>Close</button>
+    </p>
+  </div>
+</div>
+
+<div class="sheet" data-sheet="quote" hidden>
+  <div class="scrim" data-close></div>
+  <div class="panel">
+    <div class="slot" aria-hidden="true"></div>
+    <div class="receipt" role="document" aria-live="polite">
+      <p class="r-head"><img src="/brand/saleng-labs-mark.svg" alt="" width="34" height="34" /><b>{brand.name}</b></p>
+      <p class="r-sub">Words for the road</p>
+      <p class="r-meta"><span data-when></span><span data-no></span></p>
+      <p class="r-rule" aria-hidden="true"></p>
+      <blockquote><p data-text></p></blockquote>
+      <p class="r-by"><span data-by></span><span data-from></span></p>
+      <p class="r-rule" aria-hidden="true"></p>
+      <p class="r-foot">{brand.location}<br />Thank you. Come back anytime.</p>
+      <p class="r-barcode" aria-hidden="true"></p>
+    </div>
+    <p class="actions">
+      <button type="button" data-again>Print another</button>
+      <button type="button" data-close>Close</button>
+    </p>
+  </div>
+</div>
+
+<div class="sheet" data-sheet="notebook" hidden>
+  <div class="scrim" data-close></div>
+  <div class="panel">
+    <div class="book" data-at="0">
+      {leaves.map((leaf, k) => (
+        <div class="leaf" style={`z-index:${leaves.length - k}`}>
+          {leaf.map((p, side) => (
+            <div class:list={['face', side ? 'verso' : 'recto', p.kind]}>
+              {p.kind === 'cover' && (
+                <>
+                  <img src="/brand/saleng-labs-mark.svg" alt="" width="84" height="84" />
+                  <h2>Kind words</h2>
+                  <p>from the people we’ve built for</p>
+                  <span class="band" aria-hidden="true"></span>
+                </>
+              )}
+              {p.kind === 'inside' && (
+                <>
+                  <p class="hand">This notebook belongs to the businesses we work with.</p>
+                  <p class="hand small">Here’s what they say, in their own words. Turn the page.</p>
+                  <img src="/brand/saleng-labs-mark.svg" alt="" width="44" height="44" class="stamp" />
+                </>
+              )}
+              {p.kind === 'quote' && p.t && (
+                <>
+                  <span class="qmark" aria-hidden="true">“</span>
+                  <p class="hand q" set:html={ph(p.t.quote)} />
+                  <p class="by">
+                    {p.t.photo ? <img src={p.t.photo.src} alt="" width="44" height="44" class="face-pic" /> : <span class="face-pic">{initials(p.t.name)}</span>}
+                    <span><b set:html={ph(p.t.name)} /><span set:html={ph(p.t.role)} /></span>
+                  </p>
+                </>
+              )}
+              {p.kind === 'end' && (
+                <>
+                  <p class="hand">Your business could be on the next page.</p>
+                  <p class="reach">
+                    <a href={`mailto:${brand.email}`}>{brand.email}</a>
+                    <a href={tel}>{brand.phone}</a>
+                  </p>
+                </>
+              )}
+              {p.kind === 'backcover' && <img src="/brand/saleng-labs-mark.svg" alt="" width="48" height="48" />}
+              {(p.kind === 'quote' || p.kind === 'end' || p.kind === 'inside') && <span class="folio">{2 * k + side}</span>}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+    <p class="actions">
+      <button type="button" data-prev aria-label="Previous page">&larr;</button>
+      <button type="button" data-close>Close</button>
+      <button type="button" data-next aria-label="Next page">&rarr;</button>
+    </p>
+  </div>
+</div>
+
+<style is:global>
+  .sheet { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; padding: 16px; }
+  .sheet[hidden] { display: none; }
+  .sheet .scrim { position: absolute; inset: 0; background: #050607b3; opacity: 0; transition: opacity 0.35s; }
+  .sheet.open .scrim { opacity: 1; }
+  .sheet .panel {
+    position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px;
+    transform: var(--from, scale(0.9)); opacity: 0;
+    transition: transform 0.6s cubic-bezier(0.2, 0.85, 0.25, 1), opacity 0.3s;
+  }
+  .sheet.open .panel { transform: none; opacity: 1; }
+  .sheet .actions { display: flex; gap: 8px; margin: 0; }
+  .sheet .actions a, .sheet .actions button {
+    border: 1px solid #2a2d31; background: #121417; color: #d6d8db; cursor: pointer; text-decoration: none;
+    padding: 9px 16px; border-radius: 999px; font: 500 14px/1.2 'Red Hat Text', system-ui, sans-serif;
+  }
+  .sheet .actions a:hover, .sheet .actions button:hover { border-color: #3ecf8e; color: #3ecf8e; }
+  .sheet .actions :focus-visible { outline: 2px solid #3ecf8e; outline-offset: 2px; }
+
+  /* Calling card: 3.5 x 2 in, dark with the green mark; click turns it over */
+  .callcard {
+    --w: min(560px, calc(100vw - 32px));
+    position: relative; width: var(--w); aspect-ratio: 7 / 4; padding: 0; border: 0; background: none; cursor: pointer;
+    perspective: 1600px; color: #f2f2f2; text-align: left; font-family: 'Red Hat Text', system-ui, sans-serif;
+  }
+  .callcard .side {
+    position: absolute; inset: 0; border-radius: calc(var(--w) * 0.025); background: #17191c; overflow: hidden;
+    backface-visibility: hidden; transition: transform 0.7s cubic-bezier(0.3, 0.7, 0.2, 1);
+    box-shadow: 0 30px 80px #000a, inset 0 0 0 1px #ffffff12;
+  }
+  .callcard .side::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3.2%; background: #3ecf8e; }
+  .callcard .reverse { transform: rotateY(180deg); display: grid; place-content: center; justify-items: center; gap: 10px; }
+  .callcard.flipped .obverse { transform: rotateY(-180deg); }
+  .callcard.flipped .reverse { transform: rotateY(0); }
+  .callcard .obverse { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto 1fr auto; padding: calc(var(--w) * 0.07); }
+  .callcard .mark { width: calc(var(--w) * 0.11); height: auto; grid-column: 1; }
+  .callcard .brandname { font: 700 calc(var(--w) * 0.068) / 1 'Red Hat Display', system-ui, sans-serif; letter-spacing: -0.01em; margin-top: calc(var(--w) * 0.03); grid-column: 1 / -1; }
+  .callcard .reverse img { width: calc(var(--w) * 0.2); height: auto; }
+  .callcard .reverse .brandname { margin: 0; font-size: calc(var(--w) * 0.05); }
+  .callcard .tagline { grid-column: 1 / -1; color: #8b8f96; font-size: calc(var(--w) * 0.03); margin-top: calc(var(--w) * 0.012); }
+  .callcard .who, .callcard .contact { grid-row: 4; display: flex; flex-direction: column; gap: 4px; font-size: calc(var(--w) * 0.028); color: #9aa0a6; }
+  .callcard .who b { color: #f2f2f2; font-weight: 500; font-size: calc(var(--w) * 0.034); }
+  .callcard .contact { text-align: right; color: #d6d8db; }
+
+  /* Printed quote: a thermal receipt fed down out of a slot */
+  [data-sheet='quote'] .panel { gap: 0; }
+  [data-sheet='quote'] .actions { margin-top: 18px; }
+  .sheet .slot { width: min(380px, calc(100vw - 16px)); height: 14px; border-radius: 7px; background: #0b0c0d; box-shadow: inset 0 3px 6px #000, 0 0 0 1px #2a2d31; position: relative; z-index: 1; }
+  .receipt {
+    width: min(330px, calc(100vw - 48px)); margin: -7px 0 0; padding: 26px 24px 18px; box-sizing: border-box;
+    background: #fbfaf6; color: #1b1c1e; font: 400 13px/1.5 'Red Hat Mono', ui-monospace, monospace;
+    clip-path: inset(0 0 0 0); box-shadow: 0 24px 60px #0008;
+    -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 8px) no-repeat, conic-gradient(from 135deg at 50% 0, #000 90deg, #0000 0) bottom / 12px 8px repeat-x;
+  }
+  .receipt.printing { animation: feed 1.3s steps(16) both; }
+  @keyframes feed { from { clip-path: inset(0 0 100% 0); transform: translateY(-40px); } to { clip-path: inset(0 0 0 0); transform: none; } }
+  .receipt p { margin: 0; }
+  .receipt .r-head { display: flex; align-items: center; justify-content: center; gap: 10px; font: 700 20px/1 'Red Hat Display', system-ui, sans-serif; }
+  .receipt .r-head img { filter: brightness(0.55) saturate(1.4); }
+  .receipt .r-sub { text-align: center; text-transform: uppercase; letter-spacing: 0.18em; font-size: 11px; margin-top: 8px; color: #55585c; }
+  .receipt .r-meta { display: flex; justify-content: space-between; margin-top: 14px; font-size: 11px; color: #55585c; }
+  .receipt .r-rule { border-top: 1px dashed #9a9ca0; margin: 12px 0; }
+  .receipt blockquote { margin: 6px 0 12px; }
+  .receipt blockquote p { font-size: 15px; line-height: 1.6; text-wrap: pretty; }
+  .receipt .r-by { display: flex; flex-direction: column; align-items: flex-end; font-weight: 500; }
+  .receipt .r-by span + span { font-weight: 400; color: #55585c; font-style: italic; }
+  .receipt .r-foot { text-align: center; font-size: 11px; color: #55585c; }
+  .receipt .r-barcode { height: 34px; margin: 14px 12px 4px; background: repeating-linear-gradient(90deg, #1b1c1e 0 2px, #0000 2px 4px, #1b1c1e 4px 5px, #0000 5px 8px, #1b1c1e 8px 11px, #0000 11px 12px); }
+
+  /* Notebook: a hardcover opened flat, its leaves turning on the spine */
+  .book {
+    --pw: min(calc((100vw - 32px) / 2), 360px, calc((100svh - 110px) * 0.72));
+    --ph: calc(var(--pw) / 0.72);
+    position: relative; width: calc(var(--pw) * 2); height: var(--ph); perspective: 2400px;
+    transition: transform 0.8s cubic-bezier(0.3, 0.7, 0.2, 1);
+  }
+  .book[data-at='0'] { transform: translateX(-25%); }
+  .book[data-at='end'] { transform: translateX(25%); }
+  .leaf {
+    position: absolute; left: 50%; top: 0; width: 50%; height: 100%; transform-origin: left center; transform-style: preserve-3d;
+    transition: transform 0.9s cubic-bezier(0.45, 0.05, 0.2, 1); cursor: pointer;
+  }
+  .leaf.turned { transform: rotateY(-180deg); }
+  .face {
+    position: absolute; inset: 0; backface-visibility: hidden; overflow: hidden; box-sizing: border-box;
+    padding: calc(var(--pw) * 0.12) calc(var(--pw) * 0.11); display: flex; flex-direction: column;
+    background: #f4eddc repeating-linear-gradient(#0000 0 calc(var(--pw) * 0.085 - 1px), #9fb3c8 calc(var(--pw) * 0.085 - 1px) calc(var(--pw) * 0.085)) 0 calc(var(--pw) * 0.1) / 100% 100% no-repeat;
+    color: #2a2622; font-family: 'Red Hat Text', system-ui, sans-serif; border-radius: 0 6px 6px 0;
+  }
+  .face.recto { box-shadow: inset 18px 0 24px -14px #0004; }
+  .face.verso { transform: rotateY(180deg); border-radius: 6px 0 0 6px; box-shadow: inset -18px 0 24px -14px #0004; }
+  .face.cover, .face.versocover { background: #262321 radial-gradient(circle at 30% 20%, #3a3532, #1f1c1a 75%); color: #e9e2d6; }
+  .face.cover { align-items: center; justify-content: center; text-align: center; gap: 6px; border-radius: 4px 10px 10px 4px; box-shadow: inset 6px 0 0 #1a1816, 0 20px 60px #0009; }
+  .face.cover img { width: calc(var(--pw) * 0.24); height: auto; filter: grayscale(1) brightness(0.9) sepia(0.4); opacity: 0.85; }
+  .face.cover h2 { margin: 12px 0 0; font: 700 calc(var(--pw) * 0.11) / 1 'Red Hat Display', system-ui, sans-serif; letter-spacing: -0.01em; }
+  .face.cover p { margin: 0; color: #a69e93; font-size: calc(var(--pw) * 0.042); }
+  .face.cover .band { position: absolute; right: 13%; top: 0; bottom: 0; width: 3.2%; background: #0c0d0e; }
+  .face.versocover { align-items: center; justify-content: center; border-radius: 10px 4px 4px 10px; box-shadow: inset -6px 0 0 #1a1816, 0 20px 60px #0009; }
+  .face.versocover > img { opacity: 0.35; filter: grayscale(1); }
+  .face.inside, .face.quote, .face.end, .face.blank { background-color: #f4eddc; }
+  .face .hand { margin: 0; font: 500 calc(var(--pw) * 0.078) / calc(var(--pw) * 0.085) 'Caveat', cursive; color: #23324a; }
+  .face .hand.small { margin-top: calc(var(--pw) * 0.085); font-size: calc(var(--pw) * 0.064); }
+  .face .stamp { margin-top: auto; align-self: flex-end; opacity: 0.6; transform: rotate(-8deg); }
+  .face .qmark { font: 700 calc(var(--pw) * 0.22) / 0.6 'Red Hat Display', system-ui, sans-serif; color: #3ecf8e; height: calc(var(--pw) * 0.085); }
+  .face .q { margin-top: calc(var(--pw) * 0.03); font-size: calc(var(--pw) * 0.075); }
+  .face .by { margin: auto 0 0; display: flex; align-items: center; gap: 10px; font-size: calc(var(--pw) * 0.04); line-height: 1.3; }
+  .face .by > span:not(.face-pic) { display: flex; flex-direction: column; }
+  .face .by b { font-weight: 500; }
+  .face .face-pic { width: calc(var(--pw) * 0.13); height: calc(var(--pw) * 0.13); border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: #2a2622; color: #f4eddc; font-size: calc(var(--pw) * 0.042); flex: none; }
+  .face .reach { margin: calc(var(--pw) * 0.08) 0 0; display: flex; flex-direction: column; gap: 6px; font-size: calc(var(--pw) * 0.045); }
+  .face .reach a { color: #1e6b4a; }
+  .face .folio { position: absolute; bottom: calc(var(--pw) * 0.05); font-size: calc(var(--pw) * 0.034); color: #8a8278; }
+  .face.recto .folio { right: calc(var(--pw) * 0.08); }
+  .face.verso .folio { left: calc(var(--pw) * 0.08); }
+  .face .ph { color: #b7791f; }
+  [data-sheet='notebook'] .actions button[disabled] { opacity: 0.35; cursor: default; border-color: #2a2d31; color: #d6d8db; }
+
+  /* What clicking the thing under the mouse does */
+  .tip {
+    position: fixed; left: 0; top: 0; z-index: 3; pointer-events: none; white-space: nowrap;
+    padding: 6px 11px; border-radius: 999px; background: #121417e6; border: 1px solid #2a2d31; color: #e6e8ea;
+    font: 500 13px/1 'Red Hat Text', system-ui, sans-serif; opacity: 0; transition: opacity 0.15s;
+  }
+  .tip.on { opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sheet .panel, .leaf, .book, .callcard .side { transition-duration: 0.01s; }
+    .receipt.printing { animation-duration: 0.01s; }
+  }
+</style>

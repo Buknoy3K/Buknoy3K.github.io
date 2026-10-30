@@ -10,7 +10,8 @@ export const brand = {
   description:
     'Saleng Labs builds custom systems and automations for the schools, shops and offices that still run on paper.',
   location: 'La Trinidad, Benguet',
-  email: 'hello@example.com', // TODO: your real email. While it's example.com, the buttons only show a message.
+  email: 'salenglabs@gmail.com',
+  phone: '0907 409 7035',
 };
 
 // The five chapter cards along the bottom of the hero. Each card carries the colour of the chapter it opens.
