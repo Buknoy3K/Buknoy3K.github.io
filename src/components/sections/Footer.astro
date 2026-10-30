@@ -13,9 +13,9 @@ const blocks = [
 ] as const;
 
 const columns = [
-  { title: 'Chapters', links: [['Problem', '/#problem'], ['How it works', '/#how'], ['Market', '/#market'], ['Pricing', '/#model']] },
+  { title: 'Chapters', links: [['Problem', '/about/#problem'], ['How it works', '/about/#how'], ['Market', '/about/#market'], ['Pricing', '/about/#model']] },
   { title: 'Products', links: products.map((p) => [p.name, `/products/${p.slug}`]) },
-  { title: 'Company', links: [['Roadmap', '/#roadmap'], ['Team', '/#team'], ['Contact', '/#contact']] },
+  { title: 'Company', links: [['Roadmap', '/about/#roadmap'], ['Team', '/about/#team'], ['Contact', '/about/#contact']] },
 ];
 const placeholderEmail = brand.email.endsWith('example.com');
 ---

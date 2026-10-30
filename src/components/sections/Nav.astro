@@ -8,20 +8,20 @@ interface Props {
 const { afterHero = false } = Astro.props;
 
 const links = [
-  { href: '/#how', label: 'Products' },
-  { href: '/#model', label: 'Pricing' },
-  { href: '/#roadmap', label: 'Roadmap' },
-  { href: '/#team', label: 'Team' },
+  { href: '/about/#how', label: 'Products' },
+  { href: '/about/#model', label: 'Pricing' },
+  { href: '/about/#roadmap', label: 'Roadmap' },
+  { href: '/about/#team', label: 'Team' },
 ];
 ---
 
 <header class:list={['bar field field-fog', { waiting: afterHero }]} data-bar>
   <div class="wrap bar-inner">
-    <a href="/#top" class="mark" aria-label={`${brand.name}, home`}>{brand.name}</a>
+    <a href="/about/#top" class="mark" aria-label={`${brand.name}, home`}>{brand.name}</a>
     <nav aria-label="Sections">
       {links.map((l) => <a href={l.href}>{l.label}</a>)}
     </nav>
-    <a href="/#contact" class="bar-cta">Request a demo</a>
+    <a href="/about/#contact" class="bar-cta">Request a demo</a>
   </div>
 </header>
 

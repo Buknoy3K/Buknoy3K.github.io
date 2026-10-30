@@ -1,23 +1,157 @@
 ---
-import Base from '../layouts/Base.astro';
-import Hero from '../components/sections/Hero.astro';
-import Problem from '../components/sections/Problem.astro';
-import HowItWorks from '../components/sections/HowItWorks.astro';
-import Market from '../components/sections/Market.astro';
-import BusinessModel from '../components/sections/BusinessModel.astro';
-import Roadmap from '../components/sections/Roadmap.astro';
-import Founder from '../components/sections/Founder.astro';
-import CTA from '../components/sections/CTA.astro';
+import '../styles/fonts.css';
+// The home page: the campfire scene. The laptop shows the pitch page (/about/), the tablet the work desktop (/tablet/), the phone its apps (/phone/) and the kiosk its welcome screen (/kiosk/),
+// all live; clicking one zooms in so it can be used. The other things on the desk do something when clicked too
+// (Sheets holds the card, printed quote and notebook overlays).
+import Sheets from '../components/campfire/Sheets.astro';
+import { brand } from '../config/site';
+
+const pageTitle = `${brand.name}: ${brand.tagline}`;
+
+// Along the bottom: the screens (each flies the camera onto it), then the things that open something over the scene.
+// Each names its object in the scene (see desk() in models.ts and mountScreen in scene.ts).
+const screensBar = [
+  { name: 'laptop', what: 'Laptop', does: 'My website' },
+  { name: 'tablet', what: 'Tablet', does: 'My work' },
+  { name: 'phone', what: 'Phone', does: 'My apps' },
+  { name: 'kiosk', what: 'Kiosk', does: 'Self-order kiosk' },
+];
+const icon = (d: string) =>
+  `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const thingsBar = [
+  { name: 'card', does: 'Take my card', icon: icon('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h6M7 14h4"/>') },
+  { name: 'diary', does: 'Read client notes', icon: icon('<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/>') },
+  { name: 'printerSet', does: 'Print a quote', icon: icon('<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/>') },
+];
 ---
 
-<!-- The page warms as it scrolls: highland fog and night, pine, resin, then ember. Saleng starts the fire. -->
-<Base barAfterHero>
-  <Hero />
-  <Problem />
-  <HowItWorks />
-  <Market />
-  <BusinessModel />
-  <Roadmap />
-  <Founder />
-  <CTA />
-</Base>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={brand.description} />
+    <meta name="theme-color" content="#07080a" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={brand.description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content={new URL('/og.png', Astro.site ?? Astro.url)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    {Astro.site && <link rel="canonical" href={Astro.site} />}
+    {Astro.site && <meta property="og:url" content={Astro.site} />}
+    <link rel="preload" href="/fonts/red-hat-display-latin.woff2" as="font" type="font/woff2" crossorigin />
+  </head>
+  <body>
+    <canvas id="campfire" aria-label="3D scene: a desk of devices, a fire garden with a mountain pine, and a kiosk. The laptop shows the Saleng Works website, the tablet shows past work, the phone shows apps and the kiosk shows its welcome screen."></canvas>
+    <header class="hero">
+      <h1>{brand.name}</h1>
+      <p>Systems <span>&amp;</span> Automation</p>
+    </header>
+    <nav class="bar" aria-label="On the desk">
+      {screensBar.map((b) => (
+        <button type="button" class="pill" data-activate={b.name}><b>{b.what}</b> {b.does}</button>
+      ))}
+      {thingsBar.map((b) => (
+        <button type="button" class="link" data-activate={b.name}><Fragment set:html={b.icon} />{b.does}</button>
+      ))}
+    </nav>
+    <div class="zoom" role="group" aria-label="Zoom and lamp">
+      <button type="button" class="lamp" aria-pressed="false" aria-label="Desk lamp" title="Desk lamp">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" /></svg>
+      </button>
+      <button type="button" data-zoom="0.25" aria-label="Zoom in">+</button>
+      <button type="button" data-zoom="-0.25" aria-label="Zoom out">&minus;</button>
+    </div>
+    <button type="button" class="back" hidden>&larr; Back to the campfire</button>
+    <Sheets />
+
+    <script>
+      import { mountCampfire } from '../scripts/campfire/scene';
+      import { mountSheets } from '../scripts/campfire/sheets';
+      const sheets = mountSheets();
+      const back = document.querySelector<HTMLButtonElement>('.back')!;
+      const lampButton = document.querySelector<HTMLButtonElement>('.lamp')!;
+      const showLamp = (on: boolean) => lampButton.setAttribute('aria-pressed', String(on));
+      const { zoomBy, exitFocus, toggleLamp, activate } = mountCampfire(
+        document.getElementById('campfire') as HTMLCanvasElement,
+        '/about/',
+        '/tablet/',
+        '/phone/',
+        '/kiosk/',
+        (focused) => {
+          document.body.classList.toggle('focused', focused);
+          back.hidden = !focused;
+        },
+        showLamp,
+        sheets.open,
+        (zoomedIn) => document.body.classList.toggle('zoomed', zoomedIn),
+      );
+      lampButton.addEventListener('click', () => showLamp(toggleLamp()));
+      document.querySelectorAll<HTMLButtonElement>('[data-zoom]').forEach((b) => b.addEventListener('click', () => zoomBy(Number(b.dataset.zoom))));
+      back.addEventListener('click', exitFocus);
+      document.querySelectorAll<HTMLButtonElement>('[data-activate]').forEach((b) => b.addEventListener('click', () => activate(b.dataset.activate!)));
+    </script>
+
+    <style is:global>
+      html, body { margin: 0; height: 100%; background: #07080a; overflow: hidden; }
+      #campfire { position: relative; z-index: 1; display: block; width: 100vw; height: 100svh; touch-action: none; }
+      /* Title over the scene, and the row of things to try along the bottom; both step aside while a screen is open,
+         and the title while zoomed in, so it doesn't sit over the desk */
+      .hero {
+        position: fixed; top: clamp(36px, 9vh, 88px); left: 16px; right: 16px; z-index: 2; pointer-events: none;
+        display: flex; flex-direction: column; align-items: center; text-align: center;
+      }
+      .hero h1 {
+        /* the text is painted by its background, so the box keeps room for the g's tail and the overhangs */
+        margin: 0; padding: 0.04em 0.06em 0.12em; font: 900 clamp(40px, 5.6vw, 76px)/1.1 'Red Hat Display', system-ui, sans-serif; letter-spacing: -0.035em;
+        background: linear-gradient(180deg, #fbf6ee 30%, #d9c7ae); -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      /* Small caps between two hairlines that fade out */
+      .hero p {
+        margin: 6px 0 0; display: flex; align-items: center; gap: 14px; color: #3ecf8e;
+        font: 500 clamp(11px, 0.95vw, 13px)/1 'Red Hat Text', system-ui, sans-serif; letter-spacing: 0.34em; text-transform: uppercase;
+      }
+      .hero p::before, .hero p::after { content: ''; width: clamp(28px, 4vw, 56px); height: 1px; background: linear-gradient(90deg, #3ecf8e00, #3ecf8e80); }
+      .hero p::after { transform: scaleX(-1); }
+      .hero p span { color: #a3a7ad; }
+      .bar {
+        position: fixed; left: 50%; bottom: 20px; z-index: 2; transform: translateX(-50%);
+        display: flex; align-items: center; gap: 8px; max-width: calc(100vw - 128px); overflow-x: auto; scrollbar-width: none;
+      }
+      .bar button {
+        flex: none; display: inline-flex; align-items: center; gap: 7px; cursor: pointer; white-space: nowrap;
+        font: 400 15px/1 'Red Hat Text', system-ui, sans-serif; color: #a3a7ad; background: none; border: 1px solid transparent;
+        padding: 12px 18px; border-radius: 999px; transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+      }
+      .bar .pill { border-color: #2a2d31; background: #121417cc; }
+      .bar .pill b { color: #ecedee; font-weight: 500; }
+      .bar .link { padding-inline: 12px; }
+      .bar button:hover { color: #3ecf8e; border-color: #3ecf8e; }
+      .bar .link:hover { border-color: transparent; }
+      .bar button:focus-visible { outline: 2px solid #3ecf8e; outline-offset: 2px; }
+      @media (max-width: 720px) {
+        .bar { left: 16px; right: 72px; max-width: none; transform: none; bottom: 16px; }
+        .bar button { font-size: 14px; padding: 10px 14px; }
+      }
+      .zoom { position: fixed; right: 16px; bottom: 16px; z-index: 2; display: flex; flex-direction: column; gap: 6px; }
+      .zoom button, .back {
+        border: 1px solid #2a2d31; background: #121417cc; color: #d6d8db; cursor: pointer;
+      }
+      .zoom button { width: 40px; height: 40px; border-radius: 50%; font: 20px/1 system-ui, sans-serif; }
+      .zoom button { display: grid; place-items: center; }
+      .zoom button:hover, .back:hover { border-color: #3ecf8e; color: #3ecf8e; }
+      .zoom .lamp[aria-pressed='true'] { color: #ffcf8f; border-color: #ffcf8f; }
+      .zoom button:focus-visible, .back:focus-visible { outline: 2px solid #3ecf8e; outline-offset: 2px; }
+      .hero, .bar, .zoom { transition: opacity 0.3s; }
+      .focused .hero, .focused .bar, .focused .zoom, .zoomed .hero { opacity: 0; pointer-events: none; }
+      .back {
+        position: fixed; left: 16px; top: 16px; z-index: 2; padding: 8px 14px; border-radius: 999px;
+        font: 14px/1.2 system-ui, sans-serif;
+      }
+    </style>
+  </body>
+</html>

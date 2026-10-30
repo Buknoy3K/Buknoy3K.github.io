@@ -8,7 +8,7 @@ const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application
 // Same page sizes as scene.ts lays the iframes out at: its width, and the screen glass's shape for the height
 // (laptop glass 0.31 x 0.204 m, tablet glass 0.188 x 0.13 m, phone glass 0.064 x 0.138 m, kiosk glass 0.415 x 0.69 m)
 const shots = [
-  { url: '/', file: 'site', width: 1440, height: Math.round((1440 * 0.204) / 0.31) },
+  { url: '/about/', file: 'site', width: 1440, height: Math.round((1440 * 0.204) / 0.31) },
   { url: '/tablet', file: 'tablet', width: 1200, height: Math.round((1200 * 0.13) / 0.188) },
   { url: '/phone', file: 'phone', width: 390, height: Math.round((390 * 0.138) / 0.064) },
   { url: '/kiosk', file: 'kiosk', width: 1080, height: Math.round((1080 * 0.69) / 0.415) },
