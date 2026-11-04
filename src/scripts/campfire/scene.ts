@@ -1,30 +1,31 @@
-// Campfire scene: a row of figures at night, with idle motion (flames, sparks, smoke, swaying pines).
-// Left to right: the fire garden, the desk and the kiosk. The camera opens high in front of the desk, looking down on
-// it. Dragging turns the camera around the desk: sideways swings it round to either side (within limits, no full
+// Campfire scene: the desk alone on white, with the things on it, a miniature fireplace among them. Lighting the
+// fireplace turns the room to night: the white fades to dark, the daylight dims and the fire lights the desk. On opening, the
+// camera swoops down from high above and off to one side to its place in front of the desk, and the things on the desk
+// pop up onto it one by one, from the middle out. The camera then rests high in front of the desk and a little to its
+// left, looking down on it. Dragging turns the camera around the desk: sideways swings it round to either side (within limits, no full
 // orbit), and up and down tilts it a little lower or higher over the desk (never level with it, never overhead).
-// Scroll, pinch or the zoom buttons move it in or out from the default distance.
-// The laptop shows the live Saleng Works site, the tablet the work desktop (/tablet), the phone a home screen of apps
-// (/phone) and the kiosk its welcome screen (/kiosk), each an iframe pinned onto its screen in 3D; clicking one flies the camera square onto its screen so the page can be scrolled and clicked.
-// The other things on the desk do something when clicked (the mug, the fire, the figure, the plant), or open a card,
+// The laptop shows the live Saleng Works site, the tablet the work desktop (/tablet) and the phone a home screen of apps
+// (/phone), each an iframe pinned onto its screen in 3D; clicking one flies the camera square onto its screen so the page can be scrolled and clicked.
+// The other things on the desk do something when clicked (the mug, the fireplace, the figure, the plant), or open a card,
 // a printed quote or the notebook over the scene (onOpen, given where the thing is on screen to grow from).
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
-import { fireGarden, kiosk, desk, roundRect, type Tick } from './models';
+import { desk, roundRect, LAPTOP_R, TABLET_R, type Tick } from './models';
 
-const GARDEN_X = -1.75, KIOSK_X = 1.3; // the desk stands at x = 0, between them
-const LOOK = new THREE.Vector3(-0.1, 0.9, -0.04); // the camera circles this point, above the desktop (high, so the scene sits low under the title)
-const DIST = 3.1; // ...from this far away, at the default zoom
-const START = { yaw: 0, pitch: THREE.MathUtils.degToRad(23) }; // opening view: straight on, showing the garden, desk and kiosk
+const LOOK = new THREE.Vector3(0, 1.0, 0.02); // the camera circles this point, above the desktop (high, so the desk sits low under the title)
+const DIST = 1.85; // ...from this far away
+const START = { yaw: THREE.MathUtils.degToRad(-13), pitch: THREE.MathUtils.degToRad(37) }; // opening view: high, a little to the desk's left
+// The opening swoop: the camera starts this far round, this high and this many times DIST away, and eases into the
+// opening view over secs. The things on the desk pop up from popAt on, one every stagger seconds, each taking pop seconds.
+const INTRO = { yaw: THREE.MathUtils.degToRad(-75), pitch: THREE.MathUtils.degToRad(80), dist: 3, secs: 3, popAt: 1.5, stagger: 0.07, pop: 0.55 };
 const BASE_FOV = 47.5;
 const YAW = THREE.MathUtils.degToRad(40); // how far a sideways drag swings the camera round to either side
 const PITCH = { min: THREE.MathUtils.degToRad(18), max: THREE.MathUtils.degToRad(55) }; // how low and high an up-down drag swings it
-const ZOOM = { in: 0.4, out: 1.25 }; // fully zoomed in or out, the camera is this many times DIST away
 const SITE_W = 1440; // the laptop's website is laid out at this width (a desktop layout), then scaled onto the screen
 const TABLET_W = 1200; // ...the tablet's desktop at this width
 const PHONE_W = 390; // ...and the phone's home screen at this width
-const KIOSK_W = 1080; // ...and the kiosk's portrait screen at this width
 const PHONE_R = 0.007; // the phone's screen has rounded corners (metres), so its page and picture do too
 const SCREEN_FILL = 0.9; // focused on a screen, it fills this share of the window
 
@@ -33,45 +34,41 @@ export function mountCampfire(
   siteUrl: string,
   workUrl: string,
   phoneUrl: string,
-  kioskUrl: string,
   onFocus: (focused: boolean) => void,
-  onLamp: (on: boolean) => void,
+  onFire: (on: boolean) => void,
   onOpen: (what: 'card' | 'quote' | 'notebook', from: DOMRect) => void,
-  onZoom: (zoomedIn: boolean) => void,
 ) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, stencil: true }); // the stencil keeps outlines to the edges
   renderer.setPixelRatio(Math.min(devicePixelRatio, matchMedia('(pointer: coarse)').matches ? 1.5 : 2)); // phones: fewer pixels, cooler battery
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#07080a');
+  const DAY = new THREE.Color('#e6e9ed'), NIGHT = new THREE.Color('#07080a');
+  const bg = (scene.background = DAY.clone());
 
   const camera = new THREE.PerspectiveCamera(BASE_FOV, 1, 0.1, 100);
 
   // A soft studio environment gives glass, metal and glaze something to reflect (no visible background).
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environmentIntensity = 0.12;
 
-  // The campfire is the only real light: everything is lit from the fire (no shadows). A faint cool ambient
-  // keeps the far sides from going pure black.
-  scene.add(new THREE.HemisphereLight('#7f93b0', '#1a120c', 0.18));
-  const fireLight = new THREE.PointLight('#ff9142', 9, 0, 1.1);
-  scene.add(fireLight);
-
-
-  const place = (o: THREE.Object3D, x: number, z: number, ry = 0) => {
-    o.position.set(x, 0, z);
-    o.rotation.y = ry;
-    scene.add(o);
-    return o;
+  // Daylight: a soft key light from high in front and to the left, and an ambient from the sky (no shadows). At night
+  // both dim right down and the fireplace's own warm light takes over. night eases from 0 (day) to 1 (fire lit).
+  const sky = new THREE.HemisphereLight('#dfe6f0', '#3a2a1e', 1);
+  const key = new THREE.DirectionalLight('#fff4e6', 1);
+  key.position.set(-1.2, 2.6, 1.8);
+  scene.add(sky, key);
+  let night = 0;
+  const light = () => {
+    bg.lerpColors(DAY, NIGHT, night);
+    sky.intensity = THREE.MathUtils.lerp(1.5, 0.3, night);
+    key.intensity = THREE.MathUtils.lerp(1.5, 0.35, night);
+    scene.environmentIntensity = THREE.MathUtils.lerp(0.45, 0.12, night);
+    outlineColor.value.lerpColors(OUTLINE_DAY, OUTLINE_NIGHT, night);
   };
-  // One row, left to right: fire garden, desk, kiosk
-  const garden = place(fireGarden(), GARDEN_X, -0.2);
-  garden.scale.setScalar(0.7);
-  fireLight.position.set(garden.position.x, 0.95, garden.position.z + 0.1); // the glow above the flames, high enough to reach the desktop
-  place(desk(), 0, 0);
-  place(kiosk(), KIOSK_X, -0.15);
+  light();
+
+  scene.add(desk());
 
   // Pages on the laptop and the tablet. From the scene, each screen shows a still picture of its page (mipmapped, so it
   // stays crisp when small). Flying onto a screen swaps in the live page: an iframe laid out at a desktop size and
@@ -97,10 +94,9 @@ export function mountCampfire(
     if (!s.frame.getAttribute('src')) s.frame.src = s.url;
   };
   // flat: the glass lies in its x-z plane facing -y (the laptop's lid); otherwise it stands in its x-y plane facing +z.
-  // radius: the glass's corner radius in metres (0 for square corners). sheen: lay a pane of glass over the page (a soft
-  // reflection and darker edges) so it reads as a lit screen rather than a printed picture.
+  // radius: the glass's corner radius in metres (0 for square corners).
   const mountScreen = (
-    objName: string, glassName: string, url: string, stillUrl: string, title: string, pageW: number, flat: boolean, radius = 0, sheen = false,
+    objName: string, glassName: string, url: string, stillUrl: string, title: string, pageW: number, flat: boolean, radius = 0,
   ): Screen => {
     const glass = scene.getObjectByName(glassName) as THREE.Mesh;
     glass.material = hole;
@@ -157,18 +153,6 @@ export function mountCampfire(
     face(still, 0.0001);
     still.visible = false;
     glass.add(still);
-    if (sheen) {
-      const pane = new THREE.Mesh(
-        new THREE.PlaneGeometry(size.x, size.y),
-        new THREE.MeshBasicMaterial({ map: sheenTexture(), transparent: true, depthWrite: false, toneMapped: false }),
-      );
-      face(pane, 0.0003);
-      glass.add(pane);
-      // The lit screen casts a little cool light onto the kiosk around it
-      const glow = new THREE.PointLight('#eef2ea', 0.35, 1.4, 1.6);
-      glow.position.set(0, 0, box.z / 2 + 0.22);
-      glass.add(glow);
-    }
     const s: Screen = {
       obj: scene.getObjectByName(objName)!, glass, frame, url, holder, still, ready: false, loaded: false, used: false, size,
       out: flat ? new THREE.Vector3(0, -1, 0) : new THREE.Vector3(0, 0, 1),
@@ -183,10 +167,9 @@ export function mountCampfire(
     return s;
   };
   const screens = [
-    mountScreen('laptop', 'laptopScreen', siteUrl, '/screens/site.webp', 'Saleng Works website', SITE_W, true),
-    mountScreen('tablet', 'tabletScreen', workUrl, '/screens/tablet.webp', 'Work', TABLET_W, false),
+    mountScreen('laptop', 'laptopScreen', siteUrl, '/screens/site.webp', 'Saleng Works website', SITE_W, true, LAPTOP_R),
+    mountScreen('tablet', 'tabletScreen', workUrl, '/screens/tablet.webp', 'Work', TABLET_W, false, TABLET_R),
     mountScreen('phone', 'phoneScreen', phoneUrl, '/screens/phone.webp', 'Apps', PHONE_W, false, PHONE_R),
-    mountScreen('kiosk', 'kioskScreen', kioskUrl, '/screens/kiosk.webp', 'Kiosk', KIOSK_W, false, 0, true),
   ];
   let target = screens[0]; // the screen the camera flies to, or back from
 
@@ -196,17 +179,17 @@ export function mountCampfire(
   });
   const clock = new THREE.Clock();
 
-  // Under the mouse, a thing on the desk lifts a little, grows a touch and gets a thin, faint white outline, and the fire
-  // flares up; each eases in and out.
-  const LIFT = 0.018, GROW = 0.04, FLARE = 0.2;
-  const hovers: { o: THREE.Object3D; y: number; s: number; now: number; line?: Outline }[] = [];
+  // Under the mouse, a thing on the desk lifts a little, grows a touch and gets a thin, faint white outline; each eases
+  // in and out. pop: when it pops up onto the desk in the opening swoop (the middle first, then outward).
+  const LIFT = 0.018, GROW = 0.04;
+  const hovers: { o: THREE.Object3D; y: number; s: number; now: number; line: Outline; pop: number }[] = [];
   scene.traverse((o) => {
-    if (o.userData.hover) hovers.push({ o, y: o.position.y, s: o.scale.x, now: 0, line: o.name === 'fire' ? undefined : outline(o) });
+    if (o.userData.hover) hovers.push({ o, y: o.position.y, s: o.scale.x, now: 0, line: outline(o), pop: 0 });
   });
-  const fireObj = scene.getObjectByName('fire')!, flames = scene.getObjectByName('flames')!;
+  [...hovers].sort((a, b) => Math.abs(a.o.position.x) - Math.abs(b.o.position.x)).forEach((h, i) => (h.pop = INTRO.popAt + i * INTRO.stagger));
+  const swoop = !matchMedia('(prefers-reduced-motion: reduce)').matches; // otherwise it opens straight on the desk
   let hovered: THREE.Object3D | null = null;
   let mouse: { x: number; y: number } | null = null, mouseMoved = false; // where the idle mouse is, and whether to pick again
-  let overKiosk = false;
   // Beside the mouse, a small label says what clicking the thing under it does
   const tip = document.createElement('div');
   tip.className = 'tip';
@@ -225,18 +208,10 @@ export function mountCampfire(
   // Drag swings the camera round the desk (want.x, -1..1 of YAW) and over it (want.y, -1..1 of the pitch range); it
   // eases toward where the pointer left it. Dragging right turns the desk to the right, like spinning a turntable, and
   // dragging down tips the desk toward you, so you look down on it.
-  // Zoom (0 = default view, 1 = closest) eases the same way, and so does focus (0 = the scene, 1 = the target screen).
+  // Focus (0 = the scene, 1 = the target screen) eases the same way.
   const want = new THREE.Vector2(START.yaw / YAW, ((START.pitch - PITCH.min) / (PITCH.max - PITCH.min)) * 2 - 1);
   const now = want.clone();
-  let zoomWant = 0, zoomNow = 0, focusWant = 0, focusNow = 0; // zoom: -1 = furthest out, 0 = default, 1 = closest
-  let zoomedIn = false;
-  const zoomTo = (z: number) => {
-    zoomWant = THREE.MathUtils.clamp(z, -1, 1);
-    if (zoomWant > 0.05 !== zoomedIn) onZoom((zoomedIn = !zoomedIn)); // the page clears its title out of the way
-  };
-  const zoomBy = (d: number) => {
-    if (!focusWant) zoomTo(zoomWant + d);
-  };
+  let focusWant = 0, focusNow = 0;
   const setFocus = (on: boolean, s = target) => {
     if (on === !!focusWant) return;
     if (on) {
@@ -255,14 +230,8 @@ export function mountCampfire(
     onFocus(on);
   };
 
-  // A click (a press that barely moves) on the laptop, tablet, phone or kiosk opens it; anywhere else while focused, it closes.
+  // A click (a press that barely moves) on the laptop, tablet or phone opens it; anywhere else while focused, it closes.
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-  const over = (e: PointerEvent, o: THREE.Object3D) => {
-    ndc.set((e.clientX / canvas.clientWidth) * 2 - 1, -(e.clientY / canvas.clientHeight) * 2 + 1);
-    ray.setFromCamera(ndc, camera);
-    return ray.intersectObject(o, true).length > 0;
-  };
-  const screenAt = (e: PointerEvent) => screens.find((s) => over(e, s.obj));
   // The hoverable thing whose surface is nearest under the mouse (smoke, sparks and hidden things don't count; anything
   // else in front blocks)
   const pick = (x: number, y: number) => {
@@ -278,14 +247,14 @@ export function mountCampfire(
     }
     return null;
   };
-  // Clicking the lamp (or the lamp button) switches it on and off
-  const lamp = scene.getObjectByName('lamp')!;
-  let lampOn = false;
-  const toggleLamp = () => {
-    lampOn = !lampOn;
-    lamp.userData.setOn(lampOn);
-    lamp.userData.label = lampOn ? 'Switch off the lamp' : 'Switch on the lamp';
-    return lampOn;
+  // Clicking the fireplace (or the fire button) lights it or puts it out
+  const hearth = scene.getObjectByName('fireplace')!;
+  let fireOn = false;
+  const toggleFire = () => {
+    fireOn = !fireOn;
+    hearth.userData.setOn(fireOn);
+    hearth.userData.label = fireOn ? 'Put out the fire' : 'Light the fire';
+    return fireOn;
   };
   // Where a thing is on screen, for an overlay to grow out of
   const box = new THREE.Box3(), corner = new THREE.Vector3();
@@ -299,7 +268,7 @@ export function mountCampfire(
     }
     return new DOMRect(x0, y0, x1 - x0, y1 - y0);
   };
-  // What clicking each thing does: screens and the lamp are handled before this
+  // What clicking each thing does: screens and the fireplace are handled before this
   const use = (o: THREE.Object3D) => {
     if (o === mugObj) {
       if (sipAt < 0) sipAt = clock.getElapsedTime();
@@ -315,26 +284,17 @@ export function mountCampfire(
   };
 
   const pointers = new Map<number, { x: number; y: number }>();
-  const spread = () => {
-    const [a, b] = [...pointers.values()];
-    return Math.hypot(a.x - b.x, a.y - b.y);
-  };
   let drag: { x: number; y: number; from: THREE.Vector2 } | null = null;
-  let pinch: { d: number; from: number } | null = null;
   canvas.addEventListener('pointerdown', (e) => {
     mouse = null;
     if (focusWant) return setFocus(false);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     canvas.setPointerCapture(e.pointerId);
-    if (pointers.size === 2) {
-      drag = null;
-      pinch = { d: spread(), from: zoomWant };
-    } else if (pointers.size === 1) drag = { x: e.clientX, y: e.clientY, from: want.clone() };
+    drag = pointers.size === 1 ? { x: e.clientX, y: e.clientY, from: want.clone() } : null; // a second finger stops the drag
   });
   canvas.addEventListener('pointermove', (e) => {
     if (!pointers.has(e.pointerId)) {
       if (e.pointerType === 'mouse' && !focusWant) {
-        overKiosk = over(e, screens[3].obj);
         mouse = { x: e.clientX, y: e.clientY };
         mouseMoved = true;
       }
@@ -342,9 +302,7 @@ export function mountCampfire(
     }
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const s = 2 / Math.min(canvas.clientWidth, canvas.clientHeight); // a full-height drag spans the up-down range
-    if (pinch && pointers.size === 2) {
-      zoomTo(pinch.from + (spread() - pinch.d) * s * 0.75);
-    } else if (drag) {
+    if (drag) {
       want.set(
         THREE.MathUtils.clamp(drag.from.x - (e.clientX - drag.x) * s, -1, 1),
         THREE.MathUtils.clamp(drag.from.y + (e.clientY - drag.y) * s, -1, 1),
@@ -354,28 +312,18 @@ export function mountCampfire(
   const end = (e: PointerEvent) => {
     const click = e.type === 'pointerup' && drag && pointers.size === 1 && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6;
     pointers.delete(e.pointerId);
-    if (pointers.size < 2) pinch = null;
     drag = null;
     if (!click) return;
-    // The thing under the pointer, nearest first; the kiosk isn't one, so it's looked for on its own
+    // The thing under the pointer, nearest first
     const o = pick(e.clientX, e.clientY);
-    const s = o ? screens.find((s) => s.obj === o) : screenAt(e);
+    const s = o && screens.find((s) => s.obj === o);
     if (s) setFocus(true, s);
-    else if (o === lamp) onLamp(toggleLamp());
+    else if (o === hearth) onFire(toggleFire());
     else if (o) use(o);
   };
   canvas.addEventListener('pointerup', end);
   canvas.addEventListener('pointercancel', end);
   canvas.addEventListener('pointerleave', () => (mouse = null));
-  canvas.addEventListener(
-    'wheel',
-    (e) => {
-      e.preventDefault();
-      zoomBy(-e.deltaY * (e.deltaMode === 1 ? 0.04 : 0.0015));
-      mouseMoved = true; // the view moves under the mouse
-    },
-    { passive: false },
-  );
   addEventListener('keydown', (e) => {
     if (e.key === 'Escape') setFocus(false);
   });
@@ -398,44 +346,46 @@ export function mountCampfire(
   const scenePos = new THREE.Vector3(), sceneQuat = new THREE.Quaternion();
   const screenPos = new THREE.Vector3(), screenOut = new THREE.Vector3(), screenUp = new THREE.Vector3(), screenScale = new THREE.Vector3();
   const focusPos = new THREE.Vector3(), focusQuat = new THREE.Quaternion(), look = new THREE.Matrix4();
+  renderer.compile(scene, camera); // up front, so the first frames of the swoop don't stall
+  let introAt = -1;
   renderer.setAnimationLoop(() => {
     const t = clock.getElapsedTime();
+    if (introAt < 0) introAt = t;
+    const ti = t - introAt; // time since the first frame, for the opening swoop
     for (const tick of ticks) tick(t);
-    // Picked against last frame's view, at most once a frame, and only after the mouse or the zoom moved
+    // Picked against last frame's view, at most once a frame, and only after the mouse moved
     if (!mouse || focusWant) hovered = null;
     else if (mouseMoved) hovered = pick(mouse.x, mouse.y);
     mouseMoved = false;
-    const label = mouse ? ((hovered?.userData.label as string | undefined) ?? (overKiosk ? 'Try the kiosk' : '')) : '';
+    const label = mouse ? ((hovered?.userData.label as string | undefined) ?? '') : '';
     if (label) tip.textContent = label; // kept while it fades out
     tip.classList.toggle('on', !!label);
     if (mouse) tip.style.transform = `translate(${mouse.x + 16}px, ${mouse.y + 20}px)`;
     canvas.style.cursor = label ? 'pointer' : '';
-    let flare = 0;
-    const heat = fireObj.userData.heat as number; // roaring up after a click
     for (const h of hovers) {
       const busy = h.o === mugObj && sipAt >= 0;
       h.now += ((h.o === hovered && !busy ? 1 : 0) - h.now) * 0.12;
-      h.line?.set(h.now);
+      h.line.set(h.now);
       if (busy) continue;
-      if (h.o === fireObj) {
-        flare = h.now;
-        flames.scale.set(1 + flare * FLARE * 0.4 + heat * 0.7, 1 + flare * FLARE + heat * 1.6, 1 + flare * FLARE * 0.4 + heat * 0.7);
-      } else {
-        h.o.position.y = h.y + h.now * LIFT;
-        h.o.scale.setScalar(h.s * (1 + h.now * GROW));
-      }
+      const pop = swoop ? backOut(THREE.MathUtils.clamp((ti - h.pop) / INTRO.pop, 0, 1)) : 1;
+      h.o.position.y = h.y + h.now * LIFT;
+      h.o.scale.setScalar(Math.max(1e-4, h.s * pop * (1 + h.now * GROW)));
     }
-    fireLight.intensity = 9 + flare * 1.8 + heat * 12 + Math.sin(t * 11) * 0.7 + Math.sin(t * 6.3) * 0.9 + Math.sin(t * 23) * 0.35;
     now.lerp(want, 0.08);
-    zoomNow += (zoomWant - zoomNow) * 0.08;
+    if (Math.abs((fireOn ? 1 : 0) - night) > 0.001) {
+      night += ((fireOn ? 1 : 0) - night) * 0.035;
+      light();
+    }
     focusNow += (focusWant - focusNow) * 0.07;
     if (Math.abs(focusWant - focusNow) < 0.001) focusNow = focusWant;
     // The camera sits on a sphere around the middle of the desk: turned round by now.x, and raised or lowered from the
-    // lowest angle (now.y = -1) to the highest (now.y = 1).
+    // lowest angle (now.y = -1) to the highest (now.y = 1). In the opening swoop it eases in from high above, further
+    // round and further out.
     aim.copy(LOOK);
-    const yaw = now.x * YAW;
-    const pitch = THREE.MathUtils.lerp(PITCH.min, PITCH.max, (now.y + 1) / 2);
-    const dist = DIST * (zoomNow < 0 ? THREE.MathUtils.lerp(1, ZOOM.out, -zoomNow) : THREE.MathUtils.lerp(1, ZOOM.in, zoomNow));
+    const p = Math.min(1, ti / INTRO.secs), k = swoop ? (p < 0.5 ? 4 * p ** 3 : 1 - (-2 * p + 2) ** 3 / 2) : 1; // eases in and out
+    const yaw = THREE.MathUtils.lerp(INTRO.yaw, now.x * YAW, k);
+    const pitch = THREE.MathUtils.lerp(INTRO.pitch, THREE.MathUtils.lerp(PITCH.min, PITCH.max, (now.y + 1) / 2), k);
+    const dist = DIST * THREE.MathUtils.lerp(INTRO.dist, 1, k);
     camera.position.set(
       aim.x + Math.cos(pitch) * Math.sin(yaw) * dist,
       aim.y + Math.sin(pitch) * dist,
@@ -527,7 +477,13 @@ export function mountCampfire(
     if (o) use(o);
   };
 
-  return { zoomBy, exitFocus: () => setFocus(false), toggleLamp, activate };
+  return { exitFocus: () => setFocus(false), toggleFire, activate };
+}
+
+/** Eases from 0 to 1, overshooting a little before it settles, so a thing pops up rather than just growing. */
+function backOut(p: number) {
+  const c = 1.9;
+  return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2);
 }
 
 // Outlines: each hoverable thing gets a shell of copies of its meshes, pushed out a few pixels along their (smoothed)
@@ -542,6 +498,9 @@ const OUTLINE = [
   { px: 4.6, opacity: 0.07 },
 ];
 const outlineRes = { value: new THREE.Vector2(1, 1) }; // the drawing buffer's size in pixels, kept by the scene
+// The outline is a soft dark line by day (white wouldn't show against white) and white at night
+const OUTLINE_DAY = new THREE.Color('#2b2620'), OUTLINE_NIGHT = new THREE.Color('#ffffff');
+const outlineColor = { value: OUTLINE_DAY.clone() };
 const shells = new Map<THREE.BufferGeometry, THREE.BufferGeometry>();
 type Outline = { set: (k: number) => void };
 
@@ -563,11 +522,11 @@ function shellGeometry(geo: THREE.BufferGeometry) {
 }
 
 /** Outlines a hoverable thing; set(k) fades it in (1) or out (0). Its materials become its own copies, so marking the
- *  stencil only while it's outlined doesn't touch other things. Glowing ones (embers, the lamp's shade, LEDs, screen
+ *  stencil only while it's outlined doesn't touch other things. Glowing ones (the fireplace's coals, LEDs, screen
  *  pictures) stay shared, since the scene animates them, and mark the stencil all the time. */
 function outline(root: THREE.Object3D): Outline {
   const mats = OUTLINE.map(({ px }) => new THREE.ShaderMaterial({
-    uniforms: { uColor: { value: new THREE.Color('#ffffff') }, uOpacity: { value: 0 }, uRes: outlineRes, uWidth: { value: px * Math.min(devicePixelRatio, 2) } },
+    uniforms: { uColor: outlineColor, uOpacity: { value: 0 }, uRes: outlineRes, uWidth: { value: px * Math.min(devicePixelRatio, 2) } },
     vertexShader: `
       uniform vec2 uRes;
       uniform float uWidth;
@@ -612,7 +571,7 @@ function outline(root: THREE.Object3D): Outline {
   };
   const meshes: THREE.Mesh[] = [];
   root.traverse((o) => {
-    if ((o as THREE.Mesh).isMesh) meshes.push(o as THREE.Mesh);
+    if ((o as THREE.Mesh).isMesh && !(o as THREE.InstancedMesh).isInstancedMesh) meshes.push(o as THREE.Mesh); // an instanced mesh's shell would trace its one template, not its copies
   });
   const shellsOf: THREE.Mesh[] = [];
   for (const mesh of meshes) {
@@ -648,27 +607,4 @@ function stillShape(size: THREE.Vector2, radius: number) {
   const pos = geo.attributes.position, uv = geo.attributes.uv;
   for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i) / size.x + 0.5, pos.getY(i) / size.y + 0.5);
   return geo;
-}
-
-/** A pane of glass for a screen: edges a touch darker than the middle, and a faint diagonal reflection across the top. */
-function sheenTexture() {
-  const c = document.createElement('canvas');
-  c.width = 256;
-  c.height = 512;
-  const g = c.getContext('2d')!;
-  const edge = g.createRadialGradient(128, 230, 60, 128, 256, 330);
-  edge.addColorStop(0, 'rgba(0,0,0,0)');
-  edge.addColorStop(1, 'rgba(0,0,0,0.22)');
-  g.fillStyle = edge;
-  g.fillRect(0, 0, 256, 512);
-  const shine = g.createLinearGradient(0, 0, 256, 300);
-  shine.addColorStop(0, 'rgba(255,255,255,0.16)');
-  shine.addColorStop(0.42, 'rgba(255,255,255,0.05)');
-  shine.addColorStop(0.43, 'rgba(255,255,255,0)');
-  shine.addColorStop(1, 'rgba(255,255,255,0)');
-  g.fillStyle = shine;
-  g.fillRect(0, 0, 256, 512);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
 }

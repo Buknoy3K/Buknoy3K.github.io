@@ -4,8 +4,11 @@
 // where its thing is on screen; src/scripts/campfire/sheets.ts opens, closes and pages them.
 import { brand, founder, testimonials } from '../../config/site';
 import { ph } from '../../lib/ph';
+import { CARD_ICONS } from '../../lib/card-icons';
 
 const tel = `tel:+63${brand.phone.replace(/\D/g, '').replace(/^0/, '')}`;
+const icon = (d: string) =>
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
 const initials = (name: string) => name.replace(/[^\p{L}\s]/gu, '').split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '?';
 
 // The notebook, page by page: the cover, then the pages as you'd see them in turn (left, right, left...), then the
@@ -22,19 +25,24 @@ const leaves = Array.from({ length: pages.length / 2 }, (_, k) => [pages[2 * k],
   <div class="panel">
     <button type="button" class="callcard" aria-label="Calling card (click to turn it over)">
       <span class="side obverse">
-        <img src="/brand/saleng-works-mark.svg" alt="" class="mark" width="64" height="64" />
-        <span class="brandname">{brand.name}</span>
-        <span class="tagline">{brand.tagline}</span>
-        <span class="who"><b>{founder.name}</b><span>{founder.role}</span></span>
-        <span class="contact">
-          <span>{brand.phone}</span>
-          <span>{brand.email}</span>
-          <span>{brand.location}</span>
+        <span class="cc-brand">
+          <img src="/brand/saleng-works-mark.svg" alt="" class="mark" width="128" height="128" />
+          <span class="cc-name">{brand.name}</span>
+          <span class="cc-tag">Systems and<br />automation</span>
+        </span>
+        <span class="cc-rule" aria-hidden="true"></span>
+        <span class="cc-info">
+          <span class="cc-person">{founder.name}</span>
+          <span class="cc-role">{founder.role.split(' · ')[0]}</span>
+          <span class="cc-line"><Fragment set:html={icon(CARD_ICONS.phone)} />{brand.phone}</span>
+          <span class="cc-line"><Fragment set:html={icon(CARD_ICONS.mail)} />{brand.email}</span>
+          <span class="cc-line"><Fragment set:html={icon(CARD_ICONS.globe)} />{brand.website}</span>
         </span>
       </span>
       <span class="side reverse">
         <img src="/brand/saleng-works-mark.svg" alt="" width="120" height="120" />
-        <span class="brandname">{brand.name}</span>
+        <span class="cc-name">{brand.name}</span>
+        <span class="cc-tag">{brand.website}</span>
       </span>
     </button>
     <p class="actions">
@@ -143,30 +151,43 @@ const leaves = Array.from({ length: pages.length / 2 }, (_, k) => [pages[2 * k],
   .sheet .actions a:hover, .sheet .actions button:hover { border-color: #3ecf8e; color: #3ecf8e; }
   .sheet .actions :focus-visible { outline: 2px solid #3ecf8e; outline-offset: 2px; }
 
-  /* Calling card: 3.5 x 2 in, dark with the green mark; click turns it over */
+  /* Calling card: near-black green with a thin green border inset from the edge. Front: the mark, name and tagline on
+     the left; a hairline; the founder's name in a serif, the role, and the contact lines with green icons on the right.
+     Click turns it over. */
   .callcard {
-    --w: min(560px, calc(100vw - 32px));
-    position: relative; width: var(--w); aspect-ratio: 7 / 4; padding: 0; border: 0; background: none; cursor: pointer;
-    perspective: 1600px; color: #f2f2f2; text-align: left; font-family: 'Red Hat Text', system-ui, sans-serif;
+    --w: min(620px, calc(100vw - 32px));
+    position: relative; width: var(--w); aspect-ratio: 680 / 410; padding: 0; border: 0; background: none; cursor: pointer;
+    perspective: 1600px; color: #ece9e3; text-align: left; font-family: 'Red Hat Text', system-ui, sans-serif;
   }
   .callcard .side {
-    position: absolute; inset: 0; border-radius: calc(var(--w) * 0.025); background: #17191c; overflow: hidden;
+    position: absolute; inset: 0; border-radius: calc(var(--w) * 0.02); background: #0b1210; overflow: hidden;
     backface-visibility: hidden; transition: transform 0.7s cubic-bezier(0.3, 0.7, 0.2, 1);
-    box-shadow: 0 30px 80px #000a, inset 0 0 0 1px #ffffff12;
+    box-shadow: 0 30px 80px #000a;
   }
-  .callcard .side::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3.2%; background: #3ecf8e; }
-  .callcard .reverse { transform: rotateY(180deg); display: grid; place-content: center; justify-items: center; gap: 10px; }
+  .callcard .side::before {
+    content: ''; position: absolute; inset: calc(var(--w) * 0.022); border: 1px solid #3ecf8e33; border-radius: calc(var(--w) * 0.012); pointer-events: none;
+  }
+  .callcard .reverse { transform: rotateY(180deg); display: grid; place-content: center; justify-items: center; gap: calc(var(--w) * 0.018); }
+  .callcard .reverse img { width: calc(var(--w) * 0.17); height: auto; margin-bottom: calc(var(--w) * 0.01); }
   .callcard.flipped .obverse { transform: rotateY(-180deg); }
   .callcard.flipped .reverse { transform: rotateY(0); }
-  .callcard .obverse { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto 1fr auto; padding: calc(var(--w) * 0.07); }
-  .callcard .mark { width: calc(var(--w) * 0.11); height: auto; grid-column: 1; }
-  .callcard .brandname { font: 700 calc(var(--w) * 0.068) / 1 'Red Hat Display', system-ui, sans-serif; letter-spacing: -0.01em; margin-top: calc(var(--w) * 0.03); grid-column: 1 / -1; }
-  .callcard .reverse img { width: calc(var(--w) * 0.2); height: auto; }
-  .callcard .reverse .brandname { margin: 0; font-size: calc(var(--w) * 0.05); }
-  .callcard .tagline { grid-column: 1 / -1; color: #8b8f96; font-size: calc(var(--w) * 0.03); margin-top: calc(var(--w) * 0.012); }
-  .callcard .who, .callcard .contact { grid-row: 4; display: flex; flex-direction: column; gap: 4px; font-size: calc(var(--w) * 0.028); color: #9aa0a6; }
-  .callcard .who b { color: #f2f2f2; font-weight: 500; font-size: calc(var(--w) * 0.034); }
-  .callcard .contact { text-align: right; color: #d6d8db; }
+  .callcard .obverse { display: grid; grid-template-columns: 40% 1px 1fr; align-items: center; }
+  .callcard .cc-brand { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .callcard .mark { width: calc(var(--w) * 0.28); height: auto; margin: calc(var(--w) * -0.03) 0 calc(var(--w) * 0.005); } /* the svg has room round the mark */
+  .callcard .cc-name { font: 600 calc(var(--w) * 0.027) / 1 'Red Hat Text', system-ui, sans-serif; letter-spacing: 0.16em; text-transform: uppercase; color: #ece9e3; }
+  .callcard .cc-tag {
+    margin-top: calc(var(--w) * 0.016); font: 500 calc(var(--w) * 0.0195) / 1.45 'Red Hat Text', system-ui, sans-serif;
+    letter-spacing: 0.16em; text-transform: uppercase; color: #3ecf8e;
+  }
+  .callcard .cc-rule { align-self: stretch; margin: calc(var(--w) * 0.1) 0; background: linear-gradient(#ffffff00, #ffffff1f 20%, #ffffff1f 80%, #ffffff00); }
+  .callcard .cc-info { display: flex; flex-direction: column; padding-left: calc(var(--w) * 0.04); }
+  .callcard .cc-person { font: 400 calc(var(--w) * 0.06) / 1 'Instrument Serif', Georgia, serif; color: #f1ece4; }
+  .callcard .cc-role {
+    margin: calc(var(--w) * 0.014) 0 calc(var(--w) * 0.045); font: 600 calc(var(--w) * 0.021) / 1 'Red Hat Text', system-ui, sans-serif;
+    letter-spacing: 0.2em; text-transform: uppercase; color: #8fa39a;
+  }
+  .callcard .cc-line { display: flex; align-items: center; gap: calc(var(--w) * 0.02); font: 500 calc(var(--w) * 0.031) / 1.9 'Red Hat Text', system-ui, sans-serif; }
+  .callcard .cc-line svg { width: calc(var(--w) * 0.03); height: calc(var(--w) * 0.03); flex: none; color: #3ecf8e; }
 
   /* Printed quote: a thermal receipt fed down out of a slot */
   [data-sheet='quote'] .panel { gap: 0; }

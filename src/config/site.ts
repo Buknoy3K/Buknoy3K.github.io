@@ -10,8 +10,9 @@ export const brand = {
   description:
     'Saleng Works builds custom systems and automations for the schools, shops and offices that still run on paper.',
   location: 'La Trinidad, Benguet',
-  email: 'salengworks@gmail.com',
+  email: 'saleng.ph@gmail.com',
   phone: '0907 409 7035',
+  website: 'saleng.ph',
 };
 
 // The five chapter cards along the bottom of the hero. Each card carries the colour of the chapter it opens.

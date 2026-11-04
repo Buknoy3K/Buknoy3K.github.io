@@ -1,6 +1,6 @@
 ---
 import '../styles/fonts.css';
-// The home page: the campfire scene. The laptop shows the pitch page (/about/), the tablet the work desktop (/tablet/), the phone its apps (/phone/) and the kiosk its welcome screen (/kiosk/),
+// The home page: the campfire scene. The laptop shows the pitch page (/about/), the tablet the work desktop (/tablet/) and the phone its apps (/phone/),
 // all live; clicking one zooms in so it can be used. The other things on the desk do something when clicked too
 // (Sheets holds the card, printed quote and notebook overlays).
 import Sheets from '../components/campfire/Sheets.astro';
@@ -14,7 +14,6 @@ const screensBar = [
   { name: 'laptop', what: 'Laptop', does: 'My website' },
   { name: 'tablet', what: 'Tablet', does: 'My work' },
   { name: 'phone', what: 'Phone', does: 'My apps' },
-  { name: 'kiosk', what: 'Kiosk', does: 'Self-order kiosk' },
 ];
 const icon = (d: string) =>
   `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
@@ -32,7 +31,7 @@ const thingsBar = [
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{pageTitle}</title>
     <meta name="description" content={brand.description} />
-    <meta name="theme-color" content="#07080a" />
+    <meta name="theme-color" content="#e6e9ed" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={brand.description} />
@@ -43,13 +42,13 @@ const thingsBar = [
     <meta name="twitter:card" content="summary_large_image" />
     {Astro.site && <link rel="canonical" href={Astro.site} />}
     {Astro.site && <meta property="og:url" content={Astro.site} />}
-    <link rel="preload" href="/fonts/red-hat-display-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
   </head>
   <body>
-    <canvas id="campfire" aria-label="3D scene: a desk of devices, a fire garden with a mountain pine, and a kiosk. The laptop shows the Saleng Works website, the tablet shows past work, the phone shows apps and the kiosk shows its welcome screen."></canvas>
+    <canvas id="campfire" aria-label="3D scene: a desk of devices with a miniature fireplace. The laptop shows the Saleng Works website, the tablet shows past work and the phone shows apps."></canvas>
     <header class="hero">
       <h1>{brand.name}</h1>
-      <p>Systems <span>&amp;</span> Automation</p>
+      <p>Systems &amp; Automation</p>
     </header>
     <nav class="bar" aria-label="On the desk">
       {screensBar.map((b) => (
@@ -59,12 +58,10 @@ const thingsBar = [
         <button type="button" class="link" data-activate={b.name}><Fragment set:html={b.icon} />{b.does}</button>
       ))}
     </nav>
-    <div class="zoom" role="group" aria-label="Zoom and lamp">
-      <button type="button" class="lamp" aria-pressed="false" aria-label="Desk lamp" title="Desk lamp">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" /></svg>
+    <div class="corner">
+      <button type="button" class="fire" aria-pressed="false" aria-label="Light the fireplace" title="Light the fireplace">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 3 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 1.5.8 2.6 2 3-.8-3 0-6 1-8.5z" /></svg>
       </button>
-      <button type="button" data-zoom="0.25" aria-label="Zoom in">+</button>
-      <button type="button" data-zoom="-0.25" aria-label="Zoom out">&minus;</button>
     </div>
     <button type="button" class="back" hidden>&larr; Back to the campfire</button>
     <Sheets />
@@ -74,80 +71,88 @@ const thingsBar = [
       import { mountSheets } from '../scripts/campfire/sheets';
       const sheets = mountSheets();
       const back = document.querySelector<HTMLButtonElement>('.back')!;
-      const lampButton = document.querySelector<HTMLButtonElement>('.lamp')!;
-      const showLamp = (on: boolean) => lampButton.setAttribute('aria-pressed', String(on));
-      const { zoomBy, exitFocus, toggleLamp, activate } = mountCampfire(
+      const fireButton = document.querySelector<HTMLButtonElement>('.fire')!;
+      // Lighting the fire turns the page to night along with the scene
+      const showFire = (on: boolean) => {
+        fireButton.setAttribute('aria-pressed', String(on));
+        fireButton.title = fireButton.ariaLabel = on ? 'Put out the fireplace' : 'Light the fireplace';
+        document.body.classList.toggle('night', on);
+        document.querySelector('meta[name="theme-color"]')!.setAttribute('content', on ? '#07080a' : '#e6e9ed');
+      };
+      const { exitFocus, toggleFire, activate } = mountCampfire(
         document.getElementById('campfire') as HTMLCanvasElement,
         '/about/',
         '/tablet/',
         '/phone/',
-        '/kiosk/',
         (focused) => {
           document.body.classList.toggle('focused', focused);
           back.hidden = !focused;
         },
-        showLamp,
+        showFire,
         sheets.open,
-        (zoomedIn) => document.body.classList.toggle('zoomed', zoomedIn),
       );
-      lampButton.addEventListener('click', () => showLamp(toggleLamp()));
-      document.querySelectorAll<HTMLButtonElement>('[data-zoom]').forEach((b) => b.addEventListener('click', () => zoomBy(Number(b.dataset.zoom))));
+      fireButton.addEventListener('click', () => showFire(toggleFire()));
       back.addEventListener('click', exitFocus);
       document.querySelectorAll<HTMLButtonElement>('[data-activate]').forEach((b) => b.addEventListener('click', () => activate(b.dataset.activate!)));
     </script>
 
     <style is:global>
-      html, body { margin: 0; height: 100%; background: #07080a; overflow: hidden; }
+      /* Day (white) until the fireplace is lit, then night; everything eases across with the scene */
+      body {
+        --bg: #e6e9ed; --ink: #1c1915; --muted: #6f675e; --line: #e2ded7; --chip: #ffffffd9; --accent: #1f9d64;
+        transition: background-color 1.2s;
+      }
+      body.night { --bg: #07080a; --ink: #f3ece2; --muted: #a0978d; --line: #2a2d31; --chip: #121417cc; --accent: #3ecf8e; }
+      html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
       #campfire { position: relative; z-index: 1; display: block; width: 100vw; height: 100svh; touch-action: none; }
-      /* Title over the scene, and the row of things to try along the bottom; both step aside while a screen is open,
-         and the title while zoomed in, so it doesn't sit over the desk */
+      /* Title over the scene, and the row of things to try along the bottom; both step aside while a screen is open */
       .hero {
-        position: fixed; top: clamp(36px, 9vh, 88px); left: 16px; right: 16px; z-index: 2; pointer-events: none;
+        position: fixed; top: clamp(44px, 10vh, 96px); left: 16px; right: 16px; z-index: 2; pointer-events: none;
         display: flex; flex-direction: column; align-items: center; text-align: center;
       }
       .hero h1 {
-        /* the text is painted by its background, so the box keeps room for the g's tail and the overhangs */
-        margin: 0; padding: 0.04em 0.06em 0.12em; font: 900 clamp(40px, 5.6vw, 76px)/1.1 'Red Hat Display', system-ui, sans-serif; letter-spacing: -0.035em;
-        background: linear-gradient(180deg, #fbf6ee 30%, #d9c7ae); -webkit-background-clip: text; background-clip: text; color: transparent;
+        margin: 0; font: 600 clamp(40px, 5vw, 68px)/1.05 Inter, system-ui, sans-serif; letter-spacing: -0.045em;
+        color: var(--ink); transition: color 1.2s;
       }
-      /* Small caps between two hairlines that fade out */
       .hero p {
-        margin: 6px 0 0; display: flex; align-items: center; gap: 14px; color: #3ecf8e;
-        font: 500 clamp(11px, 0.95vw, 13px)/1 'Red Hat Text', system-ui, sans-serif; letter-spacing: 0.34em; text-transform: uppercase;
+        margin: 12px 0 0; font: 400 clamp(16px, 1.3vw, 19px)/1.4 Inter, system-ui, sans-serif; letter-spacing: -0.01em;
+        color: var(--muted); transition: color 1.2s;
       }
-      .hero p::before, .hero p::after { content: ''; width: clamp(28px, 4vw, 56px); height: 1px; background: linear-gradient(90deg, #3ecf8e00, #3ecf8e80); }
-      .hero p::after { transform: scaleX(-1); }
-      .hero p span { color: #a3a7ad; }
       .bar {
         position: fixed; left: 50%; bottom: 20px; z-index: 2; transform: translateX(-50%);
         display: flex; align-items: center; gap: 8px; max-width: calc(100vw - 128px); overflow-x: auto; scrollbar-width: none;
       }
       .bar button {
         flex: none; display: inline-flex; align-items: center; gap: 7px; cursor: pointer; white-space: nowrap;
-        font: 400 15px/1 'Red Hat Text', system-ui, sans-serif; color: #a3a7ad; background: none; border: 1px solid transparent;
-        padding: 12px 18px; border-radius: 999px; transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+        font: 400 15px/1 Inter, system-ui, sans-serif; letter-spacing: -0.01em; color: var(--muted); background: none; border: 1px solid transparent;
+        padding: 12px 18px; border-radius: 999px; transition: color 0.15s, border-color 0.15s, background-color 1.2s;
       }
-      .bar .pill { border-color: #2a2d31; background: #121417cc; }
-      .bar .pill b { color: #ecedee; font-weight: 500; }
+      .bar .pill { border-color: var(--line); background: var(--chip); }
+      .bar .pill b { color: var(--ink); font-weight: 500; }
       .bar .link { padding-inline: 12px; }
-      .bar button:hover { color: #3ecf8e; border-color: #3ecf8e; }
+      .bar button:hover { color: var(--accent); border-color: var(--accent); }
       .bar .link:hover { border-color: transparent; }
-      .bar button:focus-visible { outline: 2px solid #3ecf8e; outline-offset: 2px; }
+      .bar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
       @media (max-width: 720px) {
         .bar { left: 16px; right: 72px; max-width: none; transform: none; bottom: 16px; }
         .bar button { font-size: 14px; padding: 10px 14px; }
       }
-      .zoom { position: fixed; right: 16px; bottom: 16px; z-index: 2; display: flex; flex-direction: column; gap: 6px; }
-      .zoom button, .back {
-        border: 1px solid #2a2d31; background: #121417cc; color: #d6d8db; cursor: pointer;
+      .corner { position: fixed; right: 16px; bottom: 16px; z-index: 2; }
+      .corner button, .back {
+        border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; transition: color 0.15s, border-color 0.15s, background-color 1.2s;
       }
-      .zoom button { width: 40px; height: 40px; border-radius: 50%; font: 20px/1 system-ui, sans-serif; }
-      .zoom button { display: grid; place-items: center; }
-      .zoom button:hover, .back:hover { border-color: #3ecf8e; color: #3ecf8e; }
-      .zoom .lamp[aria-pressed='true'] { color: #ffcf8f; border-color: #ffcf8f; }
-      .zoom button:focus-visible, .back:focus-visible { outline: 2px solid #3ecf8e; outline-offset: 2px; }
-      .hero, .bar, .zoom { transition: opacity 0.3s; }
-      .focused .hero, .focused .bar, .focused .zoom, .zoomed .hero { opacity: 0; pointer-events: none; }
+      .corner button { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; }
+      .corner button:hover, .back:hover { border-color: var(--accent); color: var(--accent); }
+      .corner .fire[aria-pressed='true'] { color: #ff9a4a; border-color: #ff9a4a; }
+      .corner button:focus-visible, .back:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .hero, .bar, .corner { transition: opacity 0.3s; }
+      /* While the camera swoops in and the desk fills up, the title and buttons wait, then rise in */
+      @media (prefers-reduced-motion: no-preference) {
+        .hero { animation: rise 0.9s 2.6s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+        .bar, .corner { animation: rise 0.9s 3s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+      }
+      @keyframes rise { from { opacity: 0; translate: 0 12px; } }
+      .focused .hero, .focused .bar, .focused .corner { opacity: 0; pointer-events: none; }
       .back {
         position: fixed; left: 16px; top: 16px; z-index: 2; padding: 8px 14px; border-radius: 999px;
         font: 14px/1.2 system-ui, sans-serif;
